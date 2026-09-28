@@ -1,0 +1,27 @@
+{
+  "name": "doksabahay",
+  "private": true,
+  "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @doksabahay/shared build && pnpm --parallel --filter @doksabahay/shared --filter @doksabahay/api --filter @doksabahay/web dev",
+    "build": "pnpm --filter @doksabahay/shared build && pnpm --filter @doksabahay/api --filter @doksabahay/web build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm --filter @doksabahay/shared build && pnpm -r typecheck",
+    "test": "pnpm --filter @doksabahay/shared build && pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:up": "docker compose up -d --wait db db_test",
+    "db:migrate": "pnpm --filter @doksabahay/api prisma:migrate",
+    "db:seed": "pnpm --filter @doksabahay/api prisma:seed",
+    "db:reset": "pnpm --filter @doksabahay/api prisma:reset",
+    "db:studio": "pnpm --filter @doksabahay/api prisma:studio",
+    "stack:up": "docker compose up --build",
+    "stack:down": "docker compose down"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.9"
+  }
+}

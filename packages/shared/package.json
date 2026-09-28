@@ -1,0 +1,25 @@
+{
+  "name": "@doksabahay/shared",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"@doksabahay/shared: no tests yet\""
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@doksabahay/eslint-config": "workspace:*",
+    "eslint": "^9.39.0",
+    "typescript": "~5.9.3"
+  }
+}

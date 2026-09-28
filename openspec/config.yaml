@@ -1,0 +1,26 @@
+schema: spec-driven
+
+context: |
+  Project: DokSaBahay, a fictional telehealth prototype. All data is fictional.
+  Stack: pnpm monorepo. apps/web = Next.js App Router, TypeScript, Tailwind, shadcn/ui,
+  TanStack Query. apps/api = NestJS, Prisma, PostgreSQL 16. packages/shared = enums,
+  types, Zod schemas. Auth: email+password, argon2, JWT access + rotating refresh
+  tokens in httpOnly cookies. Real-time: socket.io gateway with polling fallback.
+  Dates: Luxon, UTC in DB. Tests: Jest + Supertest, Playwright.
+  Hard rule: no external services (CMS, analytics, auth, email/SMS/push, file hosting,
+  calendar, AI, conferencing, CDN fonts or images).
+  All business rules and authorization are enforced in NestJS.
+  Roles: PATIENT, DOCTOR, ADMIN; admins only via seed script.
+
+rules:
+  proposal:
+    - Name the build-guide prompt number this change implements
+    - List anything out of scope for this change
+  specs:
+    - Turn every acceptance criterion and numbered rule into a requirement with WHEN/THEN scenarios
+    - Include at least one authorization scenario for every protected endpoint
+  design:
+    - Record each technical decision with the alternative rejected
+  tasks:
+    - Keep tasks small (one endpoint, model or screen each)
+    - End with tasks for lint, typecheck, tests and manual verification steps
