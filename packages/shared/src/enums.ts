@@ -94,4 +94,8 @@ export enum ErrorCode {
   INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
   ACCOUNT_INACTIVE = 'ACCOUNT_INACTIVE',
   INVALID_REFRESH_TOKEN = 'INVALID_REFRESH_TOKEN',
+  /** A new/updated availability rule overlaps another rule on the same day. */
+  RULE_OVERLAP = 'RULE_OVERLAP',
+  /** The change would remove availability already covered by a SCHEDULED appointment. */
+  SCHEDULE_CONFLICT = 'SCHEDULE_CONFLICT',
 }

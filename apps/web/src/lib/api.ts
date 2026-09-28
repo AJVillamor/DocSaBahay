@@ -4,12 +4,15 @@ import type { z } from 'zod';
 /**
  * Error thrown for failed API calls. `statusCode` is 0 when the API could not
  * be reached at all; `code` is the API's machine-readable error code, if any.
+ * `details` carries structured, error-specific extras (e.g. the appointments
+ * affected by a SCHEDULE_CONFLICT), when the API sent any.
  */
 export class ApiError extends Error {
   constructor(
     readonly statusCode: number,
     readonly code: ErrorCode | undefined,
     message: string,
+    readonly details?: unknown,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -80,6 +83,12 @@ export const api = {
     apiRequest(path, { schema, signal }),
   post: <T = void>(path: string, body?: unknown, schema?: z.ZodType<T>) =>
     apiRequest(path, { method: 'POST', body, schema }),
+  put: <T = void>(path: string, body?: unknown, schema?: z.ZodType<T>) =>
+    apiRequest(path, { method: 'PUT', body, schema }),
+  patch: <T = void>(path: string, body?: unknown, schema?: z.ZodType<T>) =>
+    apiRequest(path, { method: 'PATCH', body, schema }),
+  delete: <T = void>(path: string, schema?: z.ZodType<T>) =>
+    apiRequest(path, { method: 'DELETE', schema }),
 };
 
 async function send(path: string, options: ApiRequestOptions<unknown>): Promise<Response> {
@@ -110,7 +119,7 @@ async function send(path: string, options: ApiRequestOptions<unknown>): Promise<
 function toApiError(statusCode: number, body: unknown): ApiError {
   const parsed = apiErrorSchema.safeParse(body);
   return parsed.success
-    ? new ApiError(statusCode, parsed.data.code, parsed.data.message)
+    ? new ApiError(statusCode, parsed.data.code, parsed.data.message, parsed.data.details)
     : new ApiError(statusCode, undefined, `Request failed with status ${statusCode}.`);
 }
 

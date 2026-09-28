@@ -18,6 +18,7 @@
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "lucide-react": "^1.48.0",
+    "luxon": "^3.7.2",
     "next": "16.3.6",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -29,6 +30,7 @@
   "devDependencies": {
     "@doksabahay/eslint-config": "workspace:*",
     "@tailwindcss/postcss": "^4.3.3",
+    "@types/luxon": "^3.7.5",
     "@types/node": "^22.0.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

@@ -49,7 +49,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
 /** Converts a thrown value into the public error body. */
 export function toApiError(exception: unknown): ApiError {
   if (exception instanceof DomainException) {
-    return { statusCode: exception.statusCode, message: exception.message, code: exception.code };
+    return {
+      statusCode: exception.statusCode,
+      message: exception.message,
+      code: exception.code,
+      ...(exception.details !== undefined && { details: exception.details }),
+    };
   }
 
   if (exception instanceof HttpException) {
