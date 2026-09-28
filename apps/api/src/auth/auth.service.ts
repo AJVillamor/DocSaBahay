@@ -148,7 +148,9 @@ export class AuthService {
       where: { id: userId },
       include: {
         patientProfile: { select: { firstName: true, lastName: true, profileCompleted: true } },
-        doctorProfile: { select: { firstName: true, lastName: true, verificationStatus: true } },
+        doctorProfile: {
+          select: { firstName: true, lastName: true, verificationStatus: true, reviewNote: true },
+        },
       },
     });
     if (!user) {
@@ -164,6 +166,7 @@ export class AuthService {
       profile: profile ? { firstName: profile.firstName, lastName: profile.lastName } : null,
       ...(user.role === Role.DOCTOR && {
         verificationStatus: user.doctorProfile?.verificationStatus ?? VerificationStatus.PENDING,
+        reviewNote: user.doctorProfile?.reviewNote ?? null,
       }),
       ...(user.role === Role.PATIENT && {
         profileCompleted: user.patientProfile?.profileCompleted ?? false,
