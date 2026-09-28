@@ -9,6 +9,7 @@ import {
 } from '@doksabahay/shared';
 import {
   AccountStatus,
+  type Appointment,
   AppointmentEventType,
   AppointmentStatus,
   Prisma,
@@ -274,12 +275,58 @@ export class AppointmentsService {
       throw new CancellationReasonRequiredException();
     }
 
+    return this.performCancel(existing, caller.id, reason);
+  }
+
+  /**
+   * Cancels a still-`SCHEDULED` appointment on the doctor's behalf because the
+   * patient never joined its consultation session, even though the
+   * appointment's `startAt` has already passed. `ConsultationsService` is the
+   * only intended caller, after it has itself verified `patientJoinedAt` is
+   * still null and the no-show grace period elapsed — this method re-checks
+   * only ownership and status, not timing, since it has no notion of
+   * consultation-session state.
+   *
+   * Deliberately does not reuse `cancel`'s public entry point: that method
+   * rejects any cancellation once `startAt` has passed (the "already
+   * started" guard, meant to stop a participant aborting a session that's
+   * properly under way), which is exactly the case a no-show cancellation
+   * needs to allow. Both funnel through {@link performCancel} so the actual
+   * cancellation logic — the transaction, the `AppointmentEvent`, the emitted
+   * domain event — is written once.
+   *
+   * @throws AppointmentNotFoundException (404) if `appointmentId` is not owned by `doctorId`.
+   * @throws AppointmentNotModifiableException if the appointment is not `SCHEDULED`.
+   */
+  async cancelForNoShow(doctorId: string, appointmentId: string): Promise<AppointmentResponseDto> {
+    const existing = await this.prisma.appointment.findUnique({ where: { id: appointmentId } });
+    if (!existing || existing.doctorId !== doctorId) {
+      throw new AppointmentNotFoundException();
+    }
+    if (existing.status !== AppointmentStatus.SCHEDULED) {
+      throw new AppointmentNotModifiableException('Only a scheduled appointment can be cancelled.');
+    }
+    return this.performCancel(existing, doctorId, 'Patient did not attend.');
+  }
+
+  /**
+   * Shared core of {@link cancel} and {@link cancelForNoShow}: marks `existing`
+   * CANCELLED, appends the `AppointmentEvent`, and emits
+   * `APPOINTMENT_CANCELLED_EVENT` — every caller has already checked
+   * ownership/status/timing itself, since those checks differ between the two
+   * callers.
+   */
+  private async performCancel(
+    existing: Appointment,
+    cancelledById: string,
+    reason: string | null,
+  ): Promise<AppointmentResponseDto> {
     const appointment = await this.prisma.$transaction(async (tx) => {
       const result = await tx.appointment.updateMany({
         where: { id: existing.id, status: AppointmentStatus.SCHEDULED },
         data: {
           status: AppointmentStatus.CANCELLED,
-          cancelledById: caller.id,
+          cancelledById,
           cancelledAt: new Date(),
           cancellationReason: reason,
           version: { increment: 1 },
@@ -294,7 +341,7 @@ export class AppointmentsService {
         data: {
           appointmentId: existing.id,
           type: AppointmentEventType.CANCELLED,
-          actorId: caller.id,
+          actorId: cancelledById,
           reason,
         },
       });
@@ -306,10 +353,10 @@ export class AppointmentsService {
 
     this.events.emit(APPOINTMENT_CANCELLED_EVENT, {
       appointmentId: appointment.id,
-      actorId: caller.id,
+      actorId: cancelledById,
       patientId: appointment.patientId,
       doctorId: appointment.doctorId,
-      cancelledById: caller.id,
+      cancelledById,
       reason,
     } satisfies AppointmentCancelledEvent);
 

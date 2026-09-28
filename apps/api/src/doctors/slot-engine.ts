@@ -45,7 +45,7 @@ function overlaps(a: TimeRange, b: TimeRange): boolean {
 }
 
 /** Sets `hh:mm` on `day`'s local wall clock, re-anchoring the UTC offset for that specific date. */
-function atLocalTime(day: DateTime, hhmm: string): DateTime {
+export function atLocalTime(day: DateTime, hhmm: string): DateTime {
   const [hour, minute] = hhmm.split(':').map(Number);
   return day.set({ hour, minute, second: 0, millisecond: 0 });
 }
@@ -125,4 +125,45 @@ export function computeFreeSlots(input: SlotEngineInput): Slot[] {
   }
 
   return slots.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+}
+
+/** Input to {@link isInstantWithinAvailability}. */
+export interface InstantAvailabilityInput {
+  /** IANA zone the doctor's rules are interpreted in. */
+  timezone: string;
+  rules: WeeklyRule[];
+  /** Blocked time that overrides the rules. */
+  exceptions: TimeRange[];
+  startAt: Date;
+  endAt: Date;
+}
+
+/**
+ * Pure check: does `[startAt, endAt)` fall entirely inside one weekly rule's
+ * window (in `timezone`) and outside every exception? Unlike
+ * {@link computeFreeSlots}, this does not require `startAt` to land on a
+ * `consultationMinutes`-stepped candidate boundary — it re-validates an
+ * *existing* appointment's original `startAt`/`endAt` against a doctor's
+ * *current* rules, which may have changed (e.g. a shortened window, or a
+ * different `consultationMinutes`) since the appointment was booked. Does
+ * not consider other booked appointments — that is a separate concern from
+ * "is this instant still inside the doctor's stated availability".
+ */
+export function isInstantWithinAvailability(input: InstantAvailabilityInput): boolean {
+  const { timezone, rules, exceptions, startAt, endAt } = input;
+  const localDay = DateTime.fromJSDate(startAt, { zone: timezone }).startOf('day');
+  const dayOfWeek = localDay.weekday % 7; // Luxon: 1 = Monday … 7 = Sunday; Sunday % 7 = 0.
+
+  const coveredByRule = rules
+    .filter((rule) => rule.dayOfWeek === dayOfWeek)
+    .some((rule) => {
+      const ruleStart = atLocalTime(localDay, rule.startTime).toJSDate();
+      const ruleEnd = atLocalTime(localDay, rule.endTime).toJSDate();
+      return ruleStart <= startAt && endAt <= ruleEnd;
+    });
+  if (!coveredByRule) {
+    return false;
+  }
+
+  return !exceptions.some((exception) => overlaps(exception, { startAt, endAt }));
 }

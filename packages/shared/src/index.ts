@@ -1,5 +1,7 @@
+export * from './admin';
 export * from './appointments';
 export * from './auth';
+export * from './consultations';
 export * from './doctor-discovery';
 export * from './doctors';
 export * from './enums';
@@ -8,5 +10,6 @@ export * from './health';
 export * from './matching';
 export * from './notifications';
 export * from './patients';
+export * from './records';
 export * from './scheduling';
 export * from './specializations';

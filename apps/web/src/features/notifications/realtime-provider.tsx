@@ -26,11 +26,26 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
  */
 const TOKEN_REFRESH_INTERVAL_MS = 45_000;
 
-const RealtimeContext = createContext(false);
+interface RealtimeContextValue {
+  connected: boolean;
+  /** The shared socket instance, so other features (e.g. consultations) can join their own rooms on it instead of opening a second connection. `null` until connected. */
+  socket: Socket | null;
+}
+
+const RealtimeContext = createContext<RealtimeContextValue>({ connected: false, socket: null });
 
 /** Whether the notifications socket is currently connected. `false` while offline or reconnecting. */
 export function useRealtimeConnected(): boolean {
-  return useContext(RealtimeContext);
+  return useContext(RealtimeContext).connected;
+}
+
+/**
+ * The single shared socket connection this provider owns, or `null` while
+ * offline/reconnecting. Consumers should still guard on `useRealtimeConnected()`
+ * before emitting, since the instance can exist mid-reconnect.
+ */
+export function useRealtimeSocket(): Socket | null {
+  return useContext(RealtimeContext).socket;
 }
 
 async function fetchRealtimeToken(): Promise<string> {
@@ -54,6 +69,7 @@ export function NotificationsRealtimeProvider({ children }: { children: ReactNod
   const userId = user?.id;
   const queryClient = useQueryClient();
   const [connected, setConnected] = useState(false);
+  const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
   const tokenRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -87,6 +103,7 @@ export function NotificationsRealtimeProvider({ children }: { children: ReactNod
         withCredentials: false,
       });
 
+      setSocketInstance(socket);
       socket.on('connect', () => setConnected(true));
       socket.on('disconnect', () => setConnected(false));
       socket.on('connect_error', () => setConnected(false));
@@ -119,8 +136,13 @@ export function NotificationsRealtimeProvider({ children }: { children: ReactNod
       }
       socket?.disconnect();
       setConnected(false);
+      setSocketInstance(null);
     };
   }, [status, userId, queryClient]);
 
-  return <RealtimeContext.Provider value={connected}>{children}</RealtimeContext.Provider>;
+  return (
+    <RealtimeContext.Provider value={{ connected, socket: socketInstance }}>
+      {children}
+    </RealtimeContext.Provider>
+  );
 }

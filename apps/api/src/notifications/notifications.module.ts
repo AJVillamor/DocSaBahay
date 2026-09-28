@@ -22,6 +22,10 @@ import { ReminderJob } from './reminder.job';
  * `NotificationsGateway`) instead of configuring a second `JwtModule`.
  * `ScheduleModule.forRoot()` is registered here (not in `AppModule`) since
  * `ReminderJob` is this module's only consumer of `@nestjs/schedule`.
+ *
+ * `NotificationsService` is exported so a caller that is not a participant
+ * on the domain event it would otherwise emit (e.g. an admin action) can
+ * notify specific users directly — see `AdminAppointmentsService`.
  */
 @Module({
   imports: [ScheduleModule.forRoot(), AuthModule],
@@ -33,5 +37,6 @@ import { ReminderJob } from './reminder.job';
     RealtimeTokenService,
     ReminderJob,
   ],
+  exports: [NotificationsService],
 })
 export class NotificationsModule {}

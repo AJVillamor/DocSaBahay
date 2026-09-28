@@ -156,9 +156,11 @@ export class DoctorProfileService {
 
 /**
  * @throws InvalidSpecializationSelectionException unless the selection is
- *   exactly 1 primary and at most 2 secondary specializations.
+ *   exactly 1 primary and at most 2 secondary specializations. Exported so
+ *   the admin doctor-review module can reuse the same rule for an admin's
+ *   direct profile edit, instead of duplicating it.
  */
-function validateSpecializationSelection(
+export function validateSpecializationSelection(
   specializations: { specializationId: string; isPrimary: boolean }[],
 ): void {
   const primaryCount = specializations.filter((s) => s.isPrimary).length;

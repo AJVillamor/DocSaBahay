@@ -1,8 +1,9 @@
-import { AppointmentStatus, type Appointment } from '@doksabahay/shared';
+import { AppointmentStatus, isWithinJoinWindow, type Appointment } from '@doksabahay/shared';
 import { DateTime } from 'luxon';
+import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { avatarColor } from '@/lib/avatar';
 
 function initialsOf(person: { firstName: string; lastName: string }): string {
@@ -40,6 +41,9 @@ export function AppointmentCard({
   const canManage =
     appointment.status === AppointmentStatus.SCHEDULED &&
     new Date(appointment.startAt) > new Date();
+  const canJoinConsultation =
+    appointment.status === AppointmentStatus.SCHEDULED &&
+    isWithinJoinWindow(appointment.startAt, appointment.endAt);
 
   return (
     <li className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between">
@@ -60,6 +64,13 @@ export function AppointmentCard({
             <Badge variant="secondary" className="mt-2">
               {statusLabel(appointment)}
             </Badge>
+          ) : null}
+          {canJoinConsultation ? (
+            <div className="mt-2">
+              <Link href={`/consultations/${appointment.id}`} className={buttonVariants({ size: 'sm' })}>
+                Join consultation
+              </Link>
+            </div>
           ) : null}
         </div>
       </div>
