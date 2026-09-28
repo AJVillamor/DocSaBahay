@@ -8,6 +8,7 @@ import { validateEnv } from './config/env';
 import { DoctorsModule } from './doctors/doctors.module';
 import { HealthModule } from './health/health.module';
 import { MatchingModule } from './matching/matching.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PatientsModule } from './patients/patients.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SpecializationsModule } from './specializations/specializations.module';
@@ -26,6 +27,7 @@ import { SpecializationsModule } from './specializations/specializations.module'
     DoctorsModule,
     MatchingModule,
     AppointmentsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

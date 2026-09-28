@@ -6,6 +6,7 @@ export * from './enums';
 export * from './errors';
 export * from './health';
 export * from './matching';
+export * from './notifications';
 export * from './patients';
 export * from './scheduling';
 export * from './specializations';

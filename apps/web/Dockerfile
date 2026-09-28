@@ -18,7 +18,10 @@ COPY packages/shared packages/shared
 COPY apps/web apps/web
 # Rewrites are resolved at build time, so the API target is a build argument.
 ARG API_URL=http://api:4000
-ENV API_URL=${API_URL} NEXT_TELEMETRY_DISABLED=1
+# The browser's direct target for the notifications WebSocket (see NotificationsGateway) —
+# unlike API_URL above, this must be reachable from the browser, not just the web container.
+ARG NEXT_PUBLIC_API_URL=http://localhost:4000
+ENV API_URL=${API_URL} NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter @doksabahay/shared build && pnpm --filter @doksabahay/web build
 
 # ---- runtime: standalone server only ----
