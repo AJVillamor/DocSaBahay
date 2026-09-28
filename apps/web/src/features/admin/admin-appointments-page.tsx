@@ -9,12 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
-import { AdminAppointmentActionDialog, type AdminAppointmentActionKind } from './admin-appointment-action-dialog';
+import {
+  AdminAppointmentActionDialog,
+  type AdminAppointmentActionKind,
+} from './admin-appointment-action-dialog';
 import { AdminAppointmentDetailPanel } from './admin-appointment-detail-panel';
 import { useAdminAppointments, type AdminAppointmentsFilters } from './use-admin-appointments';
 
 const selectClassName =
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30';
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors hover:border-primary focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30';
 
 interface FormState {
   status: string;
@@ -25,7 +28,14 @@ interface FormState {
   to: string;
 }
 
-const EMPTY_FORM: FormState = { status: '', sessionState: '', doctorId: '', patientId: '', from: '', to: '' };
+const EMPTY_FORM: FormState = {
+  status: '',
+  sessionState: '',
+  doctorId: '',
+  patientId: '',
+  from: '',
+  to: '',
+};
 
 function toIsoOrUndefined(dateInputValue: string, endOfDay: boolean): string | undefined {
   if (!dateInputValue) return undefined;
@@ -77,7 +87,9 @@ export function AdminAppointmentsPage() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 lg:px-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Appointments</h1>
-        <p className="text-muted-foreground">Oversight of every appointment&apos;s logistics and status.</p>
+        <p className="text-muted-foreground">
+          Oversight of every appointment&apos;s logistics and status.
+        </p>
       </div>
 
       <form
@@ -176,7 +188,10 @@ export function AdminAppointmentsPage() {
 
       {appointments.isPending ? <PageLoading label="Loading appointments…" /> : null}
       {appointments.isError ? (
-        <PageError message={appointments.error.message} onRetry={() => void appointments.refetch()} />
+        <PageError
+          message={appointments.error.message}
+          onRetry={() => void appointments.refetch()}
+        />
       ) : null}
       {appointments.data && appointments.data.items.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 py-12 text-center">
@@ -209,10 +224,13 @@ export function AdminAppointmentsPage() {
                       {appointment.patient.firstName} {appointment.patient.lastName}
                     </td>
                     <td className="px-4 py-2">
-                      {appointment.doctor.title} {appointment.doctor.firstName} {appointment.doctor.lastName}
+                      {appointment.doctor.title} {appointment.doctor.firstName}{' '}
+                      {appointment.doctor.lastName}
                     </td>
                     <td className="px-4 py-2">
-                      <Badge variant={statusVariant(appointment.status)}>{appointment.status}</Badge>
+                      <Badge variant={statusVariant(appointment.status)}>
+                        {appointment.status}
+                      </Badge>
                     </td>
                     <td className="px-4 py-2">
                       <Badge variant="outline">{appointment.sessionState}</Badge>

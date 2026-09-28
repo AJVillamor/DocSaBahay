@@ -37,7 +37,9 @@ export function SidebarNav({ items, onNavigate }: { items: NavItem[]; onNavigate
               aria-current={active ? 'page' : undefined}
               className={cn(
                 itemClassName,
-                active ? 'bg-muted font-medium text-foreground' : 'hover:bg-muted/60',
+                active
+                  ? 'bg-secondary font-medium text-secondary-foreground'
+                  : 'transition-colors hover:bg-secondary/60 hover:text-secondary-foreground',
               )}
             >
               <Icon className="size-4" aria-hidden="true" />
