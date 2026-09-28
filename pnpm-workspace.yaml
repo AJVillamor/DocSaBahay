@@ -5,6 +5,8 @@ allowBuilds:
   '@parcel/watcher': false
   '@prisma/client': true
   '@prisma/engines': true
+  # Usage analytics (via swagger-ui-dist); external analytics are not allowed.
+  '@scarf/scarf': false
   argon2: true
   esbuild: true
   prisma: true
