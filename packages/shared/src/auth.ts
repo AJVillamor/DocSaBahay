@@ -2,6 +2,9 @@ import { z } from 'zod';
 
 import { AccountStatus, Role, VerificationStatus } from './enums';
 
+/** Names of the httpOnly auth cookies set by the API. */
+export const AUTH_COOKIES = { access: 'access_token', refresh: 'refresh_token' } as const;
+
 export const PASSWORD_MIN_LENGTH = 10;
 export const PASSWORD_MAX_LENGTH = 128;
 /** 10–128 characters with at least one letter and one digit. */

@@ -7,7 +7,7 @@ import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: 'DokSaBahay',
+  title: { default: 'DokSaBahay', template: '%s · DokSaBahay' },
   description: 'Fictional telehealth prototype.',
 };
 

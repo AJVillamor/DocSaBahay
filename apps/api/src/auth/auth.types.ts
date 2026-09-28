@@ -1,8 +1,9 @@
+import { AUTH_COOKIES } from '@doksabahay/shared';
 import { Role } from '@prisma/client';
 import type { Request } from 'express';
 
-export const ACCESS_COOKIE = 'access_token';
-export const REFRESH_COOKIE = 'refresh_token';
+export const ACCESS_COOKIE = AUTH_COOKIES.access;
+export const REFRESH_COOKIE = AUTH_COOKIES.refresh;
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 export const REFRESH_TOKEN_TTL_DAYS = 7;
 
