@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { AppointmentStatus, Prisma } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import type { DoctorPatientDto, DoctorPatientListDto } from './dto/doctor-patients.dto';
@@ -10,13 +10,17 @@ export class DoctorPatientsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Every distinct patient the doctor has ≥1 appointment with (any status),
-   * newest-appointment first, optionally filtered by a case-insensitive
-   * first/last name match.
+   * Every distinct patient the doctor has ≥1 SCHEDULED or COMPLETED
+   * appointment with, newest-appointment first, optionally filtered by a
+   * case-insensitive first/last name match. Matches `RecordsAccessPolicy
+   * .doctorTreatsPatient`'s definition of "treats" exactly — a patient never
+   * appears here only to 404 when clicked, e.g. one whose sole appointment
+   * with this doctor was CANCELLED before it ever happened.
    */
   async list(doctorId: string, search?: string): Promise<DoctorPatientListDto> {
     const where: Prisma.AppointmentWhereInput = {
       doctorId,
+      status: { in: [AppointmentStatus.SCHEDULED, AppointmentStatus.COMPLETED] },
       ...(search
         ? {
             patient: {

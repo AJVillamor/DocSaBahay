@@ -11,6 +11,8 @@ import { displayNameFor } from '@/lib/avatar';
 export interface DashboardCard {
   title: string;
   description: string;
+  /** Omitted for features that do not exist yet; shown as "Coming soon". */
+  href?: string;
 }
 
 /** Placeholder dashboard: a greeting plus "coming soon" cards for the role's future features. */
@@ -51,7 +53,18 @@ export function DashboardPlaceholder({ cards }: { cards: DashboardCard[] }) {
               <CardHeader>
                 <CardTitle>{card.title}</CardTitle>
                 <CardDescription>{card.description}</CardDescription>
-                <p className="pt-1 text-xs font-medium text-muted-foreground">Coming soon</p>
+                {card.href ? (
+                  <div className="pt-2">
+                    <Link
+                      href={card.href}
+                      className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                    >
+                      Open
+                    </Link>
+                  </div>
+                ) : (
+                  <p className="pt-1 text-xs font-medium text-muted-foreground">Coming soon</p>
+                )}
               </CardHeader>
             </Card>
           </li>
