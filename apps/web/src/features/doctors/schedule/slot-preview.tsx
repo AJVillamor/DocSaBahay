@@ -26,6 +26,19 @@ export function SlotPreview({ doctorId }: { doctorId: string }) {
     return <PageLoading label="Loading preview…" />;
   }
   if (slots.isError) {
+    // The slots endpoint 404s for a doctor who isn't yet APPROVED + ACTIVE
+    // (same "don't leak existence" rule it applies to patients) — a doctor
+    // previewing their own not-yet-approved schedule hits this every time,
+    // so show the same pending-review copy as the empty-slots case rather
+    // than a raw "not found" error.
+    if (slots.error.statusCode === 404) {
+      return (
+        <p className="text-sm text-muted-foreground">
+          Your schedule preview isn&apos;t available until an administrator approves your profile.
+          Once approved, this preview will show your next {PREVIEW_DAYS} days of free slots.
+        </p>
+      );
+    }
     return <PageError message={slots.error.message} onRetry={() => void slots.refetch()} />;
   }
   if (slots.data.length === 0) {

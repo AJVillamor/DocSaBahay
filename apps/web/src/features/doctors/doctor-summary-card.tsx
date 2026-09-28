@@ -60,13 +60,18 @@ export function DoctorSummaryCard({ doctor }: { doctor: DoctorListItem }) {
             <span className="text-muted-foreground">No availability in the next 14 days</span>
           )}
         </p>
-        <div>
+        <div className="flex gap-2">
           <Link
             href={`/patient/doctors/${doctor.id}`}
             className={buttonVariants({ variant: 'outline', size: 'sm' })}
           >
             View profile
           </Link>
+          {doctor.nextAvailableSlot ? (
+            <Link href={`/patient/book/${doctor.id}`} className={buttonVariants({ size: 'sm' })}>
+              Book
+            </Link>
+          ) : null}
         </div>
       </CardContent>
     </Card>
