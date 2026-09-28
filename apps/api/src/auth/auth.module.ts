@@ -19,18 +19,17 @@ import { TokenService } from './token.service';
  * Registration, sign-in and session management. Registers `JwtAuthGuard` and
  * `RolesGuard` globally (in that order), so every route is private by default.
  */
+const JwtModuleConfig = JwtModule.registerAsync({
+  inject: [ConfigService],
+  useFactory: (config: ConfigService<Env, true>) => ({
+    secret: config.get('JWT_ACCESS_SECRET', { infer: true }),
+    signOptions: { algorithm: 'HS256', expiresIn: ACCESS_TOKEN_TTL_SECONDS },
+    verifyOptions: { algorithms: ['HS256'] },
+  }),
+});
+
 @Module({
-  imports: [
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<Env, true>) => ({
-        secret: config.get('JWT_ACCESS_SECRET', { infer: true }),
-        signOptions: { algorithm: 'HS256', expiresIn: ACCESS_TOKEN_TTL_SECONDS },
-        verifyOptions: { algorithms: ['HS256'] },
-      }),
-    }),
-    ThrottlerModule.forRoot([LOGIN_THROTTLE]),
-  ],
+  imports: [JwtModuleConfig, ThrottlerModule.forRoot([LOGIN_THROTTLE])],
   controllers: [AuthController],
   providers: [
     AuthService,
@@ -41,6 +40,9 @@ import { TokenService } from './token.service';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
-  exports: [AuthStateService],
+  // JwtModule is re-exported so other modules (e.g. NotificationsModule, for its
+  // short-lived realtime-token JWTs) can share this same JwtService instance and
+  // JWT_ACCESS_SECRET config rather than standing up a second, parallel one.
+  exports: [AuthStateService, JwtModuleConfig],
 })
 export class AuthModule {}

@@ -59,6 +59,9 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         API_URL: http://api:4000
+        # The browser reaches the API directly at this host-published port for
+        # the notifications WebSocket (see apps/web/Dockerfile).
+        NEXT_PUBLIC_API_URL: http://localhost:4000
     depends_on:
       - api
     environment:
