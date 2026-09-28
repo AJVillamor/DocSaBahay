@@ -45,7 +45,7 @@ export function DoctorReviewPanel({ doctor }: { doctor: AdminDoctorDetail }) {
       <div className="flex gap-2">
         <Button
           type="button"
-          disabled={review.isPending}
+          disabled={review.isPending || doctor.verificationStatus === VerificationStatus.APPROVED}
           onClick={() =>
             review.mutate({
               id: doctor.id,
@@ -58,7 +58,11 @@ export function DoctorReviewPanel({ doctor }: { doctor: AdminDoctorDetail }) {
         <Button
           type="button"
           variant="destructive"
-          disabled={review.isPending || noteMissing}
+          disabled={
+            review.isPending ||
+            noteMissing ||
+            doctor.verificationStatus === VerificationStatus.REJECTED
+          }
           onClick={() => review.mutate({ id: doctor.id, input: { decision: 'REJECTED', note } })}
         >
           Reject
@@ -67,7 +71,9 @@ export function DoctorReviewPanel({ doctor }: { doctor: AdminDoctorDetail }) {
 
       {doctor.verificationStatus === VerificationStatus.PENDING ? null : (
         <p className="text-xs text-muted-foreground">
-          Approving or rejecting again overwrites the previous decision and note.
+          {doctor.verificationStatus === VerificationStatus.APPROVED
+            ? 'Already approved. Reject to reverse this decision.'
+            : 'Already rejected. Approve to reverse this decision.'}
         </p>
       )}
     </div>
