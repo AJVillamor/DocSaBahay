@@ -490,6 +490,17 @@ describe('auth (db_test)', () => {
         'GET /patients/me/profile',
         'PUT /patients/me/profile',
         'GET /specializations',
+        'GET /doctors/me/profile',
+        'PUT /doctors/me/profile',
+        'GET /doctors/me/availability/rules',
+        'POST /doctors/me/availability/rules',
+        'PATCH /doctors/me/availability/rules/{id}',
+        'DELETE /doctors/me/availability/rules/{id}',
+        'GET /doctors/me/availability/exceptions',
+        'POST /doctors/me/availability/exceptions',
+        'PATCH /doctors/me/availability/exceptions/{id}',
+        'DELETE /doctors/me/availability/exceptions/{id}',
+        'GET /doctors/{id}/slots',
       ].sort(),
     );
     for (const { operation } of operations) {

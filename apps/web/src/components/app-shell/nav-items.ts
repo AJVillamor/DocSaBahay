@@ -31,7 +31,8 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
   ],
   [Role.DOCTOR]: [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/doctor' },
-    { label: 'Schedule', icon: CalendarDays },
+    { label: 'My profile', icon: UserRound, href: '/doctor/profile' },
+    { label: 'Schedule', icon: CalendarDays, href: '/doctor/schedule' },
     { label: 'Consultations', icon: Stethoscope },
     { label: 'Patients', icon: Users },
   ],
