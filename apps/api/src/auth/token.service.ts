@@ -117,6 +117,20 @@ export class TokenService {
     });
   }
 
+  /**
+   * Revokes every active refresh token for a user, regardless of family —
+   * used when an admin changes a user's account status, so every signed-in
+   * session (all devices/tabs) is signed out at once. Pair with bumping
+   * `User.tokenVersion` (see `AuthStateService`) to also invalidate any
+   * still-valid access token immediately rather than after it expires.
+   */
+  async revokeAllForUser(userId: string): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
   private async revokeFamily(familyId: string): Promise<void> {
     await this.prisma.refreshToken.updateMany({
       where: { familyId, revokedAt: null },

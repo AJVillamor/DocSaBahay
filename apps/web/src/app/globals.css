@@ -129,3 +129,22 @@
     @apply font-sans;
   }
 }
+
+/*
+ * Scoped print stylesheet for `PrintablePrescription`: when printing, hide
+ * everything on the page except that one element (the app shell's nav, the
+ * rest of the workspace, etc.), so only the prescription itself is printed.
+ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-prescription,
+  .printable-prescription * {
+    visibility: visible;
+  }
+  .printable-prescription {
+    position: absolute;
+    inset: 0;
+  }
+}

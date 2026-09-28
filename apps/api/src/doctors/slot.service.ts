@@ -4,7 +4,7 @@ import { AccountStatus, AppointmentStatus, VerificationStatus } from '@prisma/cl
 
 import { PrismaService } from '../prisma/prisma.service';
 import { DoctorNotBookableException } from './doctors.exceptions';
-import { computeFreeSlots, type Slot } from './slot-engine';
+import { computeFreeSlots, isInstantWithinAvailability, type Slot } from './slot-engine';
 
 /**
  * Computes a doctor's free consultation slots. Reused as-is by the future
@@ -76,5 +76,40 @@ export class SlotService {
       leadTimeMinutes: LEAD_TIME_MINUTES,
       horizonDays: BOOKING_HORIZON_DAYS,
     });
+  }
+
+  /**
+   * Checks whether `[startAt, endAt)` falls inside the doctor's *current*
+   * `AvailabilityRule`s (minus `AvailabilityException`s) — unlike
+   * `getFreeSlots`, this does not require step-alignment to
+   * `consultationMinutes`, does not check verification/account status, and
+   * does not consider other booked appointments. Used by admin appointment
+   * issue detection to catch a SCHEDULED appointment whose doctor changed
+   * their schedule after it was booked; a doctor's own bookability is
+   * checked separately there.
+   *
+   * @returns `false` (never throws) if the doctor has no `DoctorProfile`.
+   */
+  async isCurrentlyAvailable(doctorId: string, startAt: Date, endAt: Date): Promise<boolean> {
+    const profile = await this.prisma.doctorProfile.findUnique({
+      where: { userId: doctorId },
+      select: { timezone: true },
+    });
+    if (!profile) {
+      return false;
+    }
+
+    const [rules, exceptions] = await Promise.all([
+      this.prisma.availabilityRule.findMany({
+        where: { doctorId },
+        select: { dayOfWeek: true, startTime: true, endTime: true },
+      }),
+      this.prisma.availabilityException.findMany({
+        where: { doctorId, startAt: { lt: endAt }, endAt: { gt: startAt } },
+        select: { startAt: true, endAt: true },
+      }),
+    ]);
+
+    return isInstantWithinAvailability({ timezone: profile.timezone, rules, exceptions, startAt, endAt });
   }
 }

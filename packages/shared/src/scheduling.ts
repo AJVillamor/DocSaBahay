@@ -13,3 +13,10 @@ export const MAX_UPCOMING_PER_PATIENT = 5;
 
 /** A SCHEDULED appointment may be rescheduled only until this many minutes before its `startAt`. */
 export const RESCHEDULE_CUTOFF_MINUTES = 120;
+
+/**
+ * A SCHEDULED appointment is flagged "stale" for admin oversight once this many
+ * minutes have passed `endAt` with its `ConsultationSession` never having reached
+ * JOINED/IN_PROGRESS. A stated-but-unconfirmed threshold from the original spec.
+ */
+export const STALE_SESSION_GRACE_MINUTES = 30;

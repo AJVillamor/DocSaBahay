@@ -43,6 +43,8 @@ const JwtModuleConfig = JwtModule.registerAsync({
   // JwtModule is re-exported so other modules (e.g. NotificationsModule, for its
   // short-lived realtime-token JWTs) can share this same JwtService instance and
   // JWT_ACCESS_SECRET config rather than standing up a second, parallel one.
-  exports: [AuthStateService, JwtModuleConfig],
+  // TokenService is exported so the admin users module can revoke every
+  // refresh token for a user when an admin changes their account status.
+  exports: [AuthStateService, TokenService, JwtModuleConfig],
 })
 export class AuthModule {}

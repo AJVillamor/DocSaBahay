@@ -109,4 +109,14 @@ export enum ErrorCode {
   RESCHEDULE_WINDOW_CLOSED = 'RESCHEDULE_WINDOW_CLOSED',
   /** The appointment was modified by someone else since it was read (optimistic-lock mismatch). */
   STALE_VERSION = 'STALE_VERSION',
+  /** The requested consultation-session state transition is not allowed from its current state. */
+  INVALID_TRANSITION = 'INVALID_TRANSITION',
+  /** A consultation join attempt fell outside `startAt - 10min` to `endAt + 30min`. */
+  OUTSIDE_JOIN_WINDOW = 'OUTSIDE_JOIN_WINDOW',
+  /** A write was attempted on a `ConsultationNote` that has already been finalized. */
+  NOTE_FINALIZED = 'NOTE_FINALIZED',
+  /** A write was attempted on a `Prescription` that has already been issued. */
+  PRESCRIPTION_ISSUED = 'PRESCRIPTION_ISSUED',
+  /** A specialization is still referenced by a doctor, symptom rule or matching keyword. */
+  SPECIALIZATION_IN_USE = 'SPECIALIZATION_IN_USE',
 }

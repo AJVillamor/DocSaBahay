@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { NotificationType } from '@prisma/client';
+import {
+  AccountStatus,
+  NotificationType,
+  Role,
+  SessionState,
+  VerificationStatus,
+} from '@prisma/client';
 import { DateTime } from 'luxon';
 
 import {
@@ -11,10 +17,27 @@ import {
   type AppointmentCreatedEvent,
   type AppointmentRescheduledEvent,
 } from '../appointments/appointments.events';
+import {
+  DOCTOR_REVIEWED_EVENT,
+  type DoctorReviewedEvent,
+} from '../admin/doctors/admin-doctors.events';
+import {
+  ACCOUNT_STATUS_CHANGED_EVENT,
+  type AccountStatusChangedEvent,
+} from '../admin/users/admin-users.events';
+import {
+  CONSULTATION_STATE_CHANGED_EVENT,
+  type ConsultationStateChangedEvent,
+} from '../consultations/consultations.events';
+import { RECORD_AVAILABLE_EVENT, type RecordAvailableEvent } from '../records/records.events';
 import { NotificationsService } from './notifications.service';
 
 const DOCTOR_APPOINTMENTS_LINK = '/doctor/appointments';
 const PATIENT_APPOINTMENTS_LINK = '/patient/appointments';
+const PATIENT_RECORDS_LINK = '/patient/records';
+const DOCTOR_PROFILE_LINK = '/doctor/profile';
+const DOCTOR_DASHBOARD_LINK = '/doctor';
+const PATIENT_DASHBOARD_LINK = '/patient';
 
 /** Renders a UTC instant for notification body text (server has no notion of the reader's timezone). */
 function formatUtc(iso: string): string {
@@ -115,43 +138,83 @@ export class NotificationsListener {
   }
 
   /**
-   * Not wired yet. Reserved for `SESSION_UPDATE` notifications (e.g. a
-   * consultation session's state changes) once a consultation-session module
-   * emits a matching domain event.
+   * A consultation session's state changed. Only notifies on a transition
+   * into `IN_PROGRESS` (the doctor started it) or `COMPLETED` (the doctor
+   * ended it) — never `JOINED`, which fires on every participant join and
+   * would be too noisy. The recipient is always the other participant
+   * (relative to `actorId`, resolved the same way as the appointment
+   * handlers above), and the link goes straight to the shared, non-role-
+   * prefixed consultation workspace route rather than the appointments list.
    */
-  @OnEvent('session.updated')
-  onSessionUpdated(_event: unknown): void {
-    // Intentionally unimplemented — see the TSDoc above.
+  @OnEvent(CONSULTATION_STATE_CHANGED_EVENT)
+  async onSessionUpdated(event: ConsultationStateChangedEvent): Promise<void> {
+    if (event.state !== SessionState.IN_PROGRESS && event.state !== SessionState.COMPLETED) {
+      return;
+    }
+    const recipientId = otherParty(event.actorId, event.patientId, event.doctorId);
+    const link = `/consultations/${event.appointmentId}`;
+    const title = event.state === SessionState.IN_PROGRESS ? 'Consultation started' : 'Consultation completed';
+    const body =
+      event.state === SessionState.IN_PROGRESS
+        ? 'Your consultation has started.'
+        : 'Your consultation has ended.';
+    await this.notifications.create(recipientId, NotificationType.SESSION_UPDATE, title, body, link);
   }
 
   /**
-   * Not wired yet. Reserved for `RECORD_AVAILABLE` notifications (e.g. a
-   * finalized consultation note or prescription becomes visible to the
-   * patient) once a records module emits a matching domain event.
+   * A consultation note was finalized or a prescription was issued: tell the
+   * patient it's now visible in their records, linking straight there.
    */
-  @OnEvent('record.available')
-  onRecordAvailable(_event: unknown): void {
-    // Intentionally unimplemented — see the TSDoc above.
+  @OnEvent(RECORD_AVAILABLE_EVENT)
+  async onRecordAvailable(event: RecordAvailableEvent): Promise<void> {
+    const title = event.kind === 'note' ? 'New consultation note available' : 'New prescription available';
+    const body =
+      event.kind === 'note'
+        ? 'Your doctor finalized a consultation note. View it in your records.'
+        : 'Your doctor issued a new prescription. View it in your records.';
+    await this.notifications.create(
+      event.patientId,
+      NotificationType.RECORD_AVAILABLE,
+      title,
+      body,
+      PATIENT_RECORDS_LINK,
+    );
+  }
+
+  /** An admin approved or rejected a doctor's profile: tell the doctor. */
+  @OnEvent(DOCTOR_REVIEWED_EVENT)
+  async onDoctorReviewed(event: DoctorReviewedEvent): Promise<void> {
+    const approved = event.decision === VerificationStatus.APPROVED;
+    const title = approved ? 'Profile approved' : 'Profile not approved';
+    const body = approved
+      ? 'Your doctor profile has been approved. Patients can now find and book you.'
+      : `Your doctor profile was not approved.${event.note ? ` ${event.note}` : ''}`;
+    await this.notifications.create(
+      event.doctorId,
+      NotificationType.DOCTOR_REVIEWED,
+      title,
+      body,
+      DOCTOR_PROFILE_LINK,
+    );
   }
 
   /**
-   * Not wired yet. Reserved for `DOCTOR_REVIEWED` notifications (e.g. an
-   * admin approves or rejects a doctor's verification) once the admin
-   * doctor-review module emits a matching domain event.
+   * An admin changed a user's account status: tell that user. This is the
+   * only way a SUSPENDED/DEACTIVATED user ever learns why — every
+   * authenticated route (including this one, indirectly, via `GET
+   * /notifications`) rejects a non-ACTIVE account, so in practice the
+   * suspend/deactivate notification and the later reactivate notification
+   * are both waiting for them the next time they can sign in at all.
    */
-  @OnEvent('doctor.reviewed')
-  onDoctorReviewed(_event: unknown): void {
-    // Intentionally unimplemented — see the TSDoc above.
-  }
-
-  /**
-   * Not wired yet. Reserved for `ACCOUNT_STATUS` notifications (e.g. an
-   * admin suspends or reactivates a user) once the admin user-management
-   * module emits a matching domain event.
-   */
-  @OnEvent('account.status-changed')
-  onAccountStatusChanged(_event: unknown): void {
-    // Intentionally unimplemented — see the TSDoc above.
+  @OnEvent(ACCOUNT_STATUS_CHANGED_EVENT)
+  async onAccountStatusChanged(event: AccountStatusChangedEvent): Promise<void> {
+    const link = event.role === Role.DOCTOR ? DOCTOR_DASHBOARD_LINK : PATIENT_DASHBOARD_LINK;
+    const reactivated = event.status === AccountStatus.ACTIVE;
+    const title = reactivated ? 'Account reactivated' : `Account ${event.status.toLowerCase()}`;
+    const body = reactivated
+      ? 'Your account has been reactivated. You can sign in and use DokSaBahay again.'
+      : `Your account has been ${event.status.toLowerCase()}.${event.reason ? ` Reason: ${event.reason}` : ''}`;
+    await this.notifications.create(event.userId, NotificationType.ACCOUNT_STATUS, title, body, link);
   }
 }
 

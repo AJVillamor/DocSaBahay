@@ -1,5 +1,6 @@
 import { Role } from '@doksabahay/shared';
 import {
+  AlertTriangle,
   CalendarDays,
   ClipboardList,
   FileText,
@@ -28,20 +29,22 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: 'Find a doctor', icon: Search, href: '/patient/doctors' },
     { label: 'Symptom checker', icon: Stethoscope, href: '/patient/find-care' },
     { label: 'Appointments', icon: CalendarDays, href: '/patient/appointments' },
-    { label: 'Records', icon: FileText },
+    { label: 'Records', icon: FileText, href: '/patient/records' },
   ],
   [Role.DOCTOR]: [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/doctor' },
     { label: 'My profile', icon: UserRound, href: '/doctor/profile' },
     { label: 'Schedule', icon: CalendarDays, href: '/doctor/schedule' },
     { label: 'Consultations', icon: Stethoscope, href: '/doctor/appointments' },
-    { label: 'Patients', icon: Users },
+    { label: 'Patients', icon: Users, href: '/doctor/patients' },
   ],
   [Role.ADMIN]: [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-    { label: 'Doctor reviews', icon: ShieldCheck },
-    { label: 'Users', icon: Users },
-    { label: 'Catalog', icon: ClipboardList },
-    { label: 'Audit log', icon: ScrollText },
+    { label: 'Doctor reviews', icon: ShieldCheck, href: '/admin/doctors' },
+    { label: 'Users', icon: Users, href: '/admin/users' },
+    { label: 'Appointments', icon: CalendarDays, href: '/admin/appointments' },
+    { label: 'Issues', icon: AlertTriangle, href: '/admin/appointments/issues' },
+    { label: 'Catalog', icon: ClipboardList, href: '/admin/specializations' },
+    { label: 'Audit log', icon: ScrollText, href: '/admin/audit' },
   ],
 };
