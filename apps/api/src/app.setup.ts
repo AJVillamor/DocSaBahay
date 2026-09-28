@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
 import { AllExceptionsFilter } from './common/errors/all-exceptions.filter';
@@ -15,6 +16,7 @@ export interface AppSetupOptions {
  */
 export function configureApp(app: INestApplication, options: AppSetupOptions): void {
   app.use(helmet());
+  app.use(cookieParser());
   app.enableCors({ origin: options.webOrigin, credentials: true });
   app.useGlobalPipes(createValidationPipe());
   app.useGlobalFilters(new AllExceptionsFilter());
