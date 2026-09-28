@@ -33,6 +33,13 @@ export class MeResponseDto {
   })
   verificationStatus?: VerificationStatus;
 
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    description: "Doctors only: the admin's note from the last review.",
+  })
+  reviewNote?: string | null;
+
   @ApiPropertyOptional({ description: 'Patients only.' })
   profileCompleted?: boolean;
 }

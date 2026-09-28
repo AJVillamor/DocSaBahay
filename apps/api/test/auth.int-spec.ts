@@ -207,6 +207,7 @@ describe('auth (db_test)', () => {
         role: Role.DOCTOR,
         profile: { firstName: 'Maria', lastName: 'Santos' },
         verificationStatus: VerificationStatus.PENDING,
+        reviewNote: null,
       });
       expect(response.body).not.toHaveProperty('profileCompleted');
       expect(cookieValue(response, 'access_token')).toBeTruthy();
@@ -295,6 +296,7 @@ describe('auth (db_test)', () => {
 
     it('keeps @Public routes open', async () => {
       await http().get('/health').expect(200);
+      await http().get('/specializations').expect(200);
     });
 
     it('rejects a tampered access token', async () => {
@@ -476,15 +478,18 @@ describe('auth (db_test)', () => {
           .map((method) => ({ path, method, operation: item[method] })),
       );
 
-    expect(operations.map((o) => `${o.method.toUpperCase()} ${o.path}`).sort()).toEqual([
-      'GET /auth/me',
-      'GET /health',
-      'POST /auth/login',
-      'POST /auth/logout',
-      'POST /auth/refresh',
-      'POST /auth/register/doctor',
-      'POST /auth/register/patient',
-    ]);
+    expect(operations.map((o) => `${o.method.toUpperCase()} ${o.path}`).sort()).toEqual(
+      [
+        'GET /auth/me',
+        'GET /health',
+        'POST /auth/login',
+        'POST /auth/logout',
+        'POST /auth/refresh',
+        'POST /auth/register/doctor',
+        'POST /auth/register/patient',
+        'GET /specializations',
+      ].sort(),
+    );
     for (const { operation } of operations) {
       expect(operation?.summary).toBeTruthy();
       expect(operation?.tags?.length).toBeGreaterThan(0);
