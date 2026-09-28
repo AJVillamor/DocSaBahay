@@ -1,4 +1,10 @@
-// Placeholder schema. Feature changes add their models here.
+// DokSaBahay data model. Tables and columns are snake_case via @@map/@map.
+// All timestamps are UTC (timestamptz). Every `patientId`, `doctorId` and
+// `actorId` references `users.id`; role-specific data lives in the profiles.
+//
+// Constraints Prisma cannot express (btree_gist EXCLUDE on appointments,
+// CHECKs) live in the hand-written `*_db_constraints` migration.
+// Enum values are mirrored in packages/shared/src/enums.ts.
 
 generator client {
   provider = "prisma-client-js"
@@ -7,4 +13,487 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+  INVALIDATED
+}
+
+enum SessionState {
+  SCHEDULED
+  JOINED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum AppointmentEventType {
+  CREATED
+  RESCHEDULED
+  CANCELLED
+  COMPLETED
+  INVALIDATED
+}
+
+enum NoteStatus {
+  DRAFT
+  FINALIZED
+}
+
+enum PrescriptionStatus {
+  DRAFT
+  ISSUED
+}
+
+enum NotificationType {
+  APPOINTMENT_BOOKED
+  APPOINTMENT_RESCHEDULED
+  APPOINTMENT_CANCELLED
+  APPOINTMENT_REMINDER
+  SCHEDULE_CHANGED
+  SESSION_UPDATE
+  RECORD_AVAILABLE
+  DOCTOR_REVIEWED
+  ACCOUNT_STATUS
+}
+
+// ---------------------------------------------------------------------------
+// Identity
+// ---------------------------------------------------------------------------
+
+/// Account for every role. `email` is stored lowercase (enforced by a CHECK).
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  email        String        @unique
+  passwordHash String        @map("password_hash")
+  role         Role
+  status       AccountStatus @default(ACTIVE)
+  statusReason String?       @map("status_reason")
+  /// Bumped to invalidate all outstanding access tokens.
+  tokenVersion Int           @default(0) @map("token_version")
+  lastLoginAt  DateTime?     @map("last_login_at") @db.Timestamptz(3)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  refreshTokens   RefreshToken[]
+  patientProfile  PatientProfile?
+  doctorProfile   DoctorProfile?  @relation("DoctorProfileUser")
+  reviewedDoctors DoctorProfile[] @relation("DoctorProfileReviewer")
+
+  doctorSpecializations  DoctorSpecialization[]
+  availabilityRules      AvailabilityRule[]
+  availabilityExceptions AvailabilityException[]
+
+  patientAppointments   Appointment[]      @relation("AppointmentPatient")
+  doctorAppointments    Appointment[]      @relation("AppointmentDoctor")
+  cancelledAppointments Appointment[]      @relation("AppointmentCancelledBy")
+  appointmentEvents     AppointmentEvent[]
+
+  doctorNotes          ConsultationNote[] @relation("NoteDoctor")
+  patientNotes         ConsultationNote[] @relation("NotePatient")
+  doctorPrescriptions  Prescription[]     @relation("PrescriptionDoctor")
+  patientPrescriptions Prescription[]     @relation("PrescriptionPatient")
+
+  notifications Notification[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+/// Rotating refresh token. Only the hash is stored; `familyId` groups a rotation chain.
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  familyId  String    @map("family_id") @db.Uuid
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Profiles
+// ---------------------------------------------------------------------------
+
+model PatientProfile {
+  id                    String   @id @default(uuid()) @db.Uuid
+  userId                String   @unique @map("user_id") @db.Uuid
+  firstName             String   @map("first_name")
+  lastName              String   @map("last_name")
+  birthDate             DateTime @map("birth_date") @db.Date
+  weightKg              Decimal  @map("weight_kg") @db.Decimal(5, 2)
+  heightCm              Decimal  @map("height_cm") @db.Decimal(5, 2)
+  phone                 String
+  city                  String
+  country               String
+  emergencyContactName  String?  @map("emergency_contact_name")
+  emergencyContactPhone String?  @map("emergency_contact_phone")
+  allergies             String?
+  chronicConditions     String?  @map("chronic_conditions")
+  currentMedications    String?  @map("current_medications")
+  pastSurgeries         String?  @map("past_surgeries")
+  profileCompleted      Boolean  @default(false) @map("profile_completed")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("patient_profiles")
+}
+
+model DoctorProfile {
+  id                  String             @id @default(uuid()) @db.Uuid
+  userId              String             @unique @map("user_id") @db.Uuid
+  firstName           String             @map("first_name")
+  lastName            String             @map("last_name")
+  title               String
+  bio                 String
+  yearsExperience     Int                @map("years_experience")
+  /// Fictional license number.
+  licenseNumber       String             @map("license_number")
+  languages           String[]
+  consultationMinutes Int                @default(30) @map("consultation_minutes")
+  /// IANA timezone, e.g. "Asia/Manila". Availability rules are interpreted in it.
+  timezone            String
+  verificationStatus  VerificationStatus @default(PENDING) @map("verification_status")
+  reviewNote          String?            @map("review_note")
+  reviewedById        String?            @map("reviewed_by_id") @db.Uuid
+  reviewedAt          DateTime?          @map("reviewed_at") @db.Timestamptz(3)
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user       User  @relation("DoctorProfileUser", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("DoctorProfileReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([verificationStatus])
+  @@map("doctor_profiles")
+}
+
+// ---------------------------------------------------------------------------
+// Specializations & availability
+// ---------------------------------------------------------------------------
+
+model Specialization {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  slug        String   @unique
+  description String
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  doctors          DoctorSpecialization[]
+  symptomRules     SymptomSpecializationRule[]
+  matchingKeywords MatchingKeyword[]
+
+  @@map("specializations")
+}
+
+model DoctorSpecialization {
+  doctorId         String   @map("doctor_id") @db.Uuid
+  specializationId String   @map("specialization_id") @db.Uuid
+  isPrimary        Boolean  @default(false) @map("is_primary")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  doctor         User           @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  specialization Specialization @relation(fields: [specializationId], references: [id], onDelete: Cascade)
+
+  @@id([doctorId, specializationId])
+  @@index([specializationId])
+  @@map("doctor_specializations")
+}
+
+/// Weekly recurring availability. Times are "HH:mm" in the doctor's timezone.
+model AvailabilityRule {
+  id        String   @id @default(uuid()) @db.Uuid
+  doctorId  String   @map("doctor_id") @db.Uuid
+  /// 0 = Sunday … 6 = Saturday.
+  dayOfWeek Int      @map("day_of_week") @db.SmallInt
+  startTime String   @map("start_time")
+  endTime   String   @map("end_time")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  doctor User @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, dayOfWeek])
+  @@map("availability_rules")
+}
+
+/// Blocked time that overrides availability rules.
+model AvailabilityException {
+  id        String   @id @default(uuid()) @db.Uuid
+  doctorId  String   @map("doctor_id") @db.Uuid
+  startAt   DateTime @map("start_at") @db.Timestamptz(3)
+  endAt     DateTime @map("end_at") @db.Timestamptz(3)
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  doctor User @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, startAt])
+  @@map("availability_exceptions")
+}
+
+// ---------------------------------------------------------------------------
+// Appointments & consultations
+// ---------------------------------------------------------------------------
+
+/// Overlapping SCHEDULED appointments per doctor / per patient are rejected by
+/// EXCLUDE constraints (see the `*_db_constraints` migration).
+model Appointment {
+  id                 String            @id @default(uuid()) @db.Uuid
+  patientId          String            @map("patient_id") @db.Uuid
+  doctorId           String            @map("doctor_id") @db.Uuid
+  startAt            DateTime          @map("start_at") @db.Timestamptz(3)
+  endAt              DateTime          @map("end_at") @db.Timestamptz(3)
+  status             AppointmentStatus @default(SCHEDULED)
+  reasonForVisit     String            @map("reason_for_visit")
+  cancelledById      String?           @map("cancelled_by_id") @db.Uuid
+  cancelledAt        DateTime?         @map("cancelled_at") @db.Timestamptz(3)
+  cancellationReason String?           @map("cancellation_reason")
+  /// Optimistic-locking counter; increment on every update.
+  version            Int               @default(0)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  patient     User  @relation("AppointmentPatient", fields: [patientId], references: [id], onDelete: Restrict)
+  doctor      User  @relation("AppointmentDoctor", fields: [doctorId], references: [id], onDelete: Restrict)
+  cancelledBy User? @relation("AppointmentCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+
+  events        AppointmentEvent[]
+  session       ConsultationSession?
+  note          ConsultationNote?
+  prescriptions Prescription[]
+
+  @@index([doctorId, startAt])
+  @@index([patientId, startAt])
+  @@map("appointments")
+}
+
+/// Append-only history of an appointment.
+model AppointmentEvent {
+  id            String               @id @default(uuid()) @db.Uuid
+  appointmentId String               @map("appointment_id") @db.Uuid
+  type          AppointmentEventType
+  actorId       String               @map("actor_id") @db.Uuid
+  fromStartAt   DateTime?            @map("from_start_at") @db.Timestamptz(3)
+  toStartAt     DateTime?            @map("to_start_at") @db.Timestamptz(3)
+  reason        String?
+  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  actor       User        @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([appointmentId, createdAt])
+  @@map("appointment_events")
+}
+
+model ConsultationSession {
+  id              String       @id @default(uuid()) @db.Uuid
+  appointmentId   String       @unique @map("appointment_id") @db.Uuid
+  state           SessionState @default(SCHEDULED)
+  patientJoinedAt DateTime?    @map("patient_joined_at") @db.Timestamptz(3)
+  doctorJoinedAt  DateTime?    @map("doctor_joined_at") @db.Timestamptz(3)
+  startedAt       DateTime?    @map("started_at") @db.Timestamptz(3)
+  endedAt         DateTime?    @map("ended_at") @db.Timestamptz(3)
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@map("consultation_sessions")
+}
+
+/// Clinical note content must never be logged.
+model ConsultationNote {
+  id              String     @id @default(uuid()) @db.Uuid
+  appointmentId   String     @unique @map("appointment_id") @db.Uuid
+  doctorId        String     @map("doctor_id") @db.Uuid
+  patientId       String     @map("patient_id") @db.Uuid
+  chiefComplaint  String     @map("chief_complaint")
+  findings        String
+  diagnosis       String?
+  recommendations String
+  summary         String
+  status          NoteStatus @default(DRAFT)
+  finalizedAt     DateTime?  @map("finalized_at") @db.Timestamptz(3)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  doctor      User        @relation("NoteDoctor", fields: [doctorId], references: [id], onDelete: Restrict)
+  patient     User        @relation("NotePatient", fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@map("consultation_notes")
+}
+
+model Prescription {
+  id            String             @id @default(uuid()) @db.Uuid
+  appointmentId String             @map("appointment_id") @db.Uuid
+  doctorId      String             @map("doctor_id") @db.Uuid
+  patientId     String             @map("patient_id") @db.Uuid
+  status        PrescriptionStatus @default(DRAFT)
+  notes         String?
+  issuedAt      DateTime?          @map("issued_at") @db.Timestamptz(3)
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  appointment Appointment        @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  doctor      User               @relation("PrescriptionDoctor", fields: [doctorId], references: [id], onDelete: Restrict)
+  patient     User               @relation("PrescriptionPatient", fields: [patientId], references: [id], onDelete: Restrict)
+  items       PrescriptionItem[]
+
+  @@index([appointmentId])
+  @@index([patientId])
+  @@index([doctorId])
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  prescriptionId String   @map("prescription_id") @db.Uuid
+  medicationName String   @map("medication_name")
+  dosage         String
+  frequency      String
+  duration       String
+  instructions   String?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@index([prescriptionId])
+  @@map("prescription_items")
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?        @map("read_at") @db.Timestamptz(3)
+  /// Prevents duplicate sends (e.g. one reminder per appointment). NULLs never collide.
+  dedupeKey String?          @unique @map("dedupe_key")
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Symptom matching
+// ---------------------------------------------------------------------------
+
+model Symptom {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  category  String
+  isRedFlag Boolean  @default(false) @map("is_red_flag")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  specializationRules SymptomSpecializationRule[]
+
+  @@map("symptoms")
+}
+
+model SymptomSpecializationRule {
+  symptomId        String   @map("symptom_id") @db.Uuid
+  specializationId String   @map("specialization_id") @db.Uuid
+  weight           Int
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  symptom        Symptom        @relation(fields: [symptomId], references: [id], onDelete: Cascade)
+  specialization Specialization @relation(fields: [specializationId], references: [id], onDelete: Cascade)
+
+  @@id([symptomId, specializationId])
+  @@index([specializationId])
+  @@map("symptom_specialization_rules")
+}
+
+/// Free-text matching keyword. `phrase` is stored lowercase (enforced by a CHECK).
+model MatchingKeyword {
+  id               String   @id @default(uuid()) @db.Uuid
+  phrase           String
+  specializationId String?  @map("specialization_id") @db.Uuid
+  weight           Int
+  isRedFlag        Boolean  @default(false) @map("is_red_flag")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  specialization Specialization? @relation(fields: [specializationId], references: [id], onDelete: Cascade)
+
+  @@index([phrase])
+  @@index([specializationId])
+  @@map("matching_keywords")
+}
+
+// ---------------------------------------------------------------------------
+// Audit
+// ---------------------------------------------------------------------------
+
+/// Append-only. `before`/`after` must never contain passwords, tokens or note content.
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String   @map("actor_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  before     Json?
+  after      Json?
+  reason     String?
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
