@@ -487,6 +487,8 @@ describe('auth (db_test)', () => {
         'POST /auth/refresh',
         'POST /auth/register/doctor',
         'POST /auth/register/patient',
+        'GET /patients/me/profile',
+        'PUT /patients/me/profile',
         'GET /specializations',
       ].sort(),
     );
