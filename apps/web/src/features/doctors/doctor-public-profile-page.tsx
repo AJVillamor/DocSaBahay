@@ -4,16 +4,12 @@ import Link from 'next/link';
 
 import { PageError, PageLoading } from '@/components/page-state';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { UserAvatar } from '@/components/user-avatar';
 
 import { useDoctorPublicProfile } from './use-doctor-discovery';
 
-/**
- * `/patient/doctors/:id`: a doctor's public profile. The "Book" button is
- * disabled ("Coming soon") since the booking flow is a separate, not-yet-
- * built feature — see the task's open questions for why this isn't a link.
- */
+/** `/patient/doctors/:id`: a doctor's public profile, with a link into the booking flow. */
 export function DoctorPublicProfilePage({ doctorId }: { doctorId: string }) {
   const profile = useDoctorPublicProfile(doctorId);
 
@@ -75,9 +71,12 @@ export function DoctorPublicProfilePage({ doctorId }: { doctorId: string }) {
           </dl>
 
           <div>
-            <Button type="button" size="lg" disabled title="Booking is not available yet">
-              Book (coming soon)
-            </Button>
+            <Link
+              href={`/patient/book/${profile.data.id}`}
+              className={buttonVariants({ size: 'lg' })}
+            >
+              Book
+            </Link>
           </div>
         </div>
       ) : null}
