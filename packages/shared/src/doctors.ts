@@ -6,7 +6,7 @@ import { VerificationStatus } from './enums';
 export const CONSULTATION_MINUTES_OPTIONS = [15, 30, 45, 60] as const;
 export type ConsultationMinutes = (typeof CONSULTATION_MINUTES_OPTIONS)[number];
 
-const consultationMinutesSchema = z.union(
+export const consultationMinutesSchema = z.union(
   CONSULTATION_MINUTES_OPTIONS.map((value) => z.literal(value)),
 );
 
