@@ -9,6 +9,8 @@ export const envSchema = z.object({
   DATABASE_URL_TEST: z.url().optional(),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
+  /** Adds `Secure` to auth cookies. Enable when the site is served over HTTPS. */
+  COOKIE_SECURE: z.stringbool().default(false),
   ADMIN_EMAIL: z.email().optional(),
   ADMIN_PASSWORD: z.string().min(8).optional(),
 });
