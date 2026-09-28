@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { validateEnv } from './config/env';
 import { DoctorsModule } from './doctors/doctors.module';
 import { HealthModule } from './health/health.module';
+import { MatchingModule } from './matching/matching.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SpecializationsModule } from './specializations/specializations.module';
 
@@ -16,6 +17,7 @@ import { SpecializationsModule } from './specializations/specializations.module'
     HealthModule,
     SpecializationsModule,
     DoctorsModule,
+    MatchingModule,
   ],
 })
 export class AppModule {}
