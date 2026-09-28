@@ -192,6 +192,14 @@ export class AdminUsersService {
     }
 
     const reason = dto.reason?.trim() || null;
+
+    // Idempotency guard: re-submitting the same status (e.g. a second click
+    // after it already succeeded, or a stale dialog resubmitted) must not
+    // re-audit, re-revoke sessions, re-cancel appointments or re-notify.
+    if (target.status === dto.status) {
+      return this.getById(id);
+    }
+
     const before = { status: target.status, statusReason: target.statusReason };
     const after = { status: dto.status, statusReason: reason };
 
