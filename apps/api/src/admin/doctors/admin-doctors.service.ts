@@ -165,10 +165,17 @@ export class AdminDoctorsService {
       dto.decision === 'APPROVED' ? VerificationStatus.APPROVED : VerificationStatus.REJECTED;
     const note = dto.note?.trim() || null;
 
-    await this.prisma.$transaction(async (tx) => {
+    const changed = await this.prisma.$transaction(async (tx) => {
       const current = await tx.doctorProfile.findUnique({ where: { userId: id } });
       if (!current) {
         throw new AdminDoctorNotFoundException();
+      }
+      // Idempotency guard: re-submitting the same decision (e.g. a second click
+      // on "Approve" after it already succeeded) must not re-audit or re-notify.
+      // The frontend also disables the button for the current decision, but a
+      // second browser tab or a direct API call could still reach this.
+      if (current.verificationStatus === decision && current.reviewNote === note) {
+        return false;
       }
       const before = { verificationStatus: current.verificationStatus, reviewNote: current.reviewNote };
       await tx.doctorProfile.update({
@@ -190,14 +197,17 @@ export class AdminDoctorsService {
         reason: note,
         ipAddress,
       });
+      return true;
     });
 
-    this.events.emit(DOCTOR_REVIEWED_EVENT, {
-      doctorId: id,
-      decision,
-      note,
-      actorId: actor.id,
-    } satisfies DoctorReviewedEvent);
+    if (changed) {
+      this.events.emit(DOCTOR_REVIEWED_EVENT, {
+        doctorId: id,
+        decision,
+        note,
+        actorId: actor.id,
+      } satisfies DoctorReviewedEvent);
+    }
 
     return this.getById(id);
   }

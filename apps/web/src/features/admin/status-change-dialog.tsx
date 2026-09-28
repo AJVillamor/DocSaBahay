@@ -48,6 +48,7 @@ export function StatusChangeDialog({
   const open = user !== null;
   const reasonRequired = status !== AccountStatus.ACTIVE;
   const reasonMissing = reasonRequired && reason.trim().length === 0;
+  const statusUnchanged = user !== null && status === user.status;
 
   const close = (next: boolean): void => {
     if (!next) {
@@ -108,11 +109,17 @@ export function StatusChangeDialog({
           </p>
         ) : null}
 
+        {statusUnchanged ? (
+          <p className="text-sm text-muted-foreground">
+            This is already the account&apos;s current status.
+          </p>
+        ) : null}
+
         <SheetFooter className="p-0">
           <Button
             type="button"
             variant={reasonRequired ? 'destructive' : 'default'}
-            disabled={!user || updateStatus.isPending || reasonMissing}
+            disabled={!user || updateStatus.isPending || reasonMissing || statusUnchanged}
             onClick={() => {
               if (!user) return;
               const trimmed = reason.trim();
