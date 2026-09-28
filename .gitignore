@@ -22,3 +22,4 @@ playwright-report/
 # misc
 .DS_Store
 *.log
+.claude/worktrees/
