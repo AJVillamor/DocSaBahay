@@ -80,6 +80,8 @@ export const api = {
     apiRequest(path, { schema, signal }),
   post: <T = void>(path: string, body?: unknown, schema?: z.ZodType<T>) =>
     apiRequest(path, { method: 'POST', body, schema }),
+  put: <T = void>(path: string, body?: unknown, schema?: z.ZodType<T>) =>
+    apiRequest(path, { method: 'PUT', body, schema }),
 };
 
 async function send(path: string, options: ApiRequestOptions<unknown>): Promise<Response> {
