@@ -26,14 +26,14 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: 'Dashboard', icon: LayoutDashboard, href: '/patient' },
     { label: 'My profile', icon: UserRound, href: '/patient/onboarding' },
     { label: 'Find a doctor', icon: Search },
-    { label: 'Appointments', icon: CalendarDays },
+    { label: 'Appointments', icon: CalendarDays, href: '/patient/appointments' },
     { label: 'Records', icon: FileText },
   ],
   [Role.DOCTOR]: [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/doctor' },
     { label: 'My profile', icon: UserRound, href: '/doctor/profile' },
     { label: 'Schedule', icon: CalendarDays, href: '/doctor/schedule' },
-    { label: 'Consultations', icon: Stethoscope },
+    { label: 'Consultations', icon: Stethoscope, href: '/doctor/appointments' },
     { label: 'Patients', icon: Users },
   ],
   [Role.ADMIN]: [

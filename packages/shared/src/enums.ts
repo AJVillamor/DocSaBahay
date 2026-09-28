@@ -98,4 +98,16 @@ export enum ErrorCode {
   RULE_OVERLAP = 'RULE_OVERLAP',
   /** The change would remove availability already covered by a SCHEDULED appointment. */
   SCHEDULE_CONFLICT = 'SCHEDULE_CONFLICT',
+  /** The signed-in patient's profile is not `profileCompleted: true` yet. */
+  PROFILE_INCOMPLETE = 'PROFILE_INCOMPLETE',
+  /** The patient already has `MAX_UPCOMING_PER_PATIENT` SCHEDULED upcoming appointments. */
+  TOO_MANY_UPCOMING_APPOINTMENTS = 'TOO_MANY_UPCOMING_APPOINTMENTS',
+  /** The requested slot is not free for this doctor (pre-check mismatch, or lost a booking race). */
+  SLOT_TAKEN = 'SLOT_TAKEN',
+  /** The patient already has another SCHEDULED appointment overlapping this time. */
+  PATIENT_OVERLAP = 'PATIENT_OVERLAP',
+  /** A reschedule was attempted less than 2 hours before the appointment's current start. */
+  RESCHEDULE_WINDOW_CLOSED = 'RESCHEDULE_WINDOW_CLOSED',
+  /** The appointment was modified by someone else since it was read (optimistic-lock mismatch). */
+  STALE_VERSION = 'STALE_VERSION',
 }
