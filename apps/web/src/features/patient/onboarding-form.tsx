@@ -112,6 +112,14 @@ export function OnboardingForm() {
     updateProfile.mutate(values, { onSuccess: () => router.replace('/patient') });
   });
 
+  const handlePrimaryAction = (): void => {
+    if (isLastStep) {
+      void onSubmit();
+    } else {
+      void goNext();
+    }
+  };
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8 lg:px-8">
       <div>
@@ -136,15 +144,17 @@ export function OnboardingForm() {
           <Button type="button" variant="outline" onClick={goBack} disabled={step === 0}>
             Back
           </Button>
-          {isLastStep ? (
-            <Button type="submit" disabled={updateProfile.isPending}>
-              {updateProfile.isPending ? 'Saving…' : 'Finish'}
-            </Button>
-          ) : (
-            <Button type="button" onClick={() => void goNext()}>
-              Next
-            </Button>
-          )}
+          {/*
+           * A single stable button element for both "Next" and "Finish": swapping
+           * between two conditionally-rendered buttons (one type="button", one
+           * type="submit") at the same screen position let a single click's
+           * mousedown/mouseup straddle the re-render, firing goNext() *and* the
+           * form's native submit on one click — skipping the last step entirely.
+           * Always type="button" so the click never depends on native submit timing.
+           */}
+          <Button type="button" onClick={handlePrimaryAction} disabled={updateProfile.isPending}>
+            {isLastStep ? (updateProfile.isPending ? 'Saving…' : 'Finish') : 'Next'}
+          </Button>
         </div>
       </form>
     </div>
