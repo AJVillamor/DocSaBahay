@@ -1,0 +1,20 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="og-title og-desc">
+  <title id="og-title">DokSaBahay</title>
+  <desc id="og-desc">See a doctor from home. Fictional telehealth prototype.</desc>
+  <rect width="1200" height="630" fill="#0a0a0a" />
+  <g transform="translate(120,150)" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.9">
+    <rect x="0" y="120" width="260" height="150" rx="14" fill="#1a1a1a" stroke="none" />
+    <path d="M-20 130 L130 10 L280 130 Z" fill="#ffffff" opacity="0.95" stroke="none" />
+    <rect x="105" y="170" width="50" height="100" rx="4" fill="#0a0a0a" stroke="none" />
+    <circle cx="130" cy="95" r="30" fill="#0a0a0a" stroke="none" />
+    <path
+      d="M130 112c-12-9-24-17-24-31a13 13 0 0 1 24-8 13 13 0 0 1 24 8c0 14-12 22-24 31z"
+      fill="#ffffff"
+      stroke="none"
+    />
+  </g>
+  <text x="470" y="270" font-family="Helvetica, Arial, sans-serif" font-size="72" font-weight="700" fill="#ffffff">DokSaBahay</text>
+  <text x="470" y="325" font-family="Helvetica, Arial, sans-serif" font-size="30" fill="#a3a3a3">See a doctor from home.</text>
+  <text x="470" y="365" font-family="Helvetica, Arial, sans-serif" font-size="30" fill="#a3a3a3">Fictional telehealth prototype.</text>
+  <text x="470" y="440" font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#f59e0b">Not for real medical use</text>
+</svg>

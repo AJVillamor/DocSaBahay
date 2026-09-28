@@ -1,32 +1,46 @@
-import Link from 'next/link';
+import { landingContent } from '@content/landing';
+import type { Metadata } from 'next';
 
-import { buttonVariants } from '@/components/ui/button';
-import { HealthStatus } from '@/features/health/health-status';
+import { CapabilitiesSection } from '@/features/landing/capabilities-section';
+import { DisclaimerBanner } from '@/features/landing/disclaimer-banner';
+import { FaqSection } from '@/features/landing/faq-section';
+import { HeroSection } from '@/features/landing/hero-section';
+import { HowItWorksSection } from '@/features/landing/how-it-works-section';
+import { LandingHeader } from '@/features/landing/landing-header';
+import { PrivacySection } from '@/features/landing/privacy-section';
 
-export default function HomePage() {
+const { meta } = landingContent;
+
+export const metadata: Metadata = {
+  title: { absolute: meta.title },
+  description: meta.description,
+  openGraph: {
+    title: meta.title,
+    description: meta.description,
+    type: 'website',
+    images: [
+      {
+        url: meta.ogImage.path,
+        width: meta.ogImage.width,
+        height: meta.ogImage.height,
+        alt: meta.ogImage.alt,
+      },
+    ],
+  },
+};
+
+export default function LandingPage() {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-8 px-4 py-12">
-      <div className="text-center">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">DokSaBahay</h1>
-        <p className="mt-2 text-muted-foreground">
-          See a doctor from home. A fictional telehealth prototype.
-        </p>
-      </div>
-      <div className="flex flex-wrap justify-center gap-3">
-        <Link href="/register/patient" className={buttonVariants({ size: 'lg' })}>
-          Register as a patient
-        </Link>
-        <Link
-          href="/register/doctor"
-          className={buttonVariants({ size: 'lg', variant: 'outline' })}
-        >
-          Join as a doctor
-        </Link>
-        <Link href="/login" className={buttonVariants({ size: 'lg', variant: 'ghost' })}>
-          Sign in
-        </Link>
-      </div>
-      <HealthStatus />
-    </main>
+    <>
+      <LandingHeader />
+      <main className="flex flex-1 flex-col">
+        <HeroSection />
+        <DisclaimerBanner />
+        <HowItWorksSection />
+        <CapabilitiesSection />
+        <PrivacySection />
+        <FaqSection />
+      </main>
+    </>
   );
 }
