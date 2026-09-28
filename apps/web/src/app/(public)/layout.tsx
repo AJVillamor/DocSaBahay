@@ -4,18 +4,22 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+const HERO_PAGES = ['/login', '/register/patient', '/register/doctor'];
+
 /**
  * Chrome for signed-out pages: brand and sign-in / register links.
- * The landing page (`/`) renders its own richer header (`LandingHeader`), so this
- * simple bar is skipped there to avoid stacking two headers.
+ * The landing page (`/`) renders its own richer header (`LandingHeader`), and
+ * the sign-in/register pages carry their own branding in `AuthHeroPanel`/
+ * `AuthHeroBand` (this bar's links would be redundant there) — all skip this
+ * simple bar.
  */
 export default function PublicLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isLandingPage = pathname === '/';
+  const hideHeader = pathname === '/' || HERO_PAGES.includes(pathname);
 
   return (
     <>
-      {!isLandingPage && (
+      {!hideHeader && (
         <header className="border-b">
           <nav
             aria-label="Main"

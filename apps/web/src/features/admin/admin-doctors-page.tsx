@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { useAdminDoctors, type AdminDoctorsFilters } from './use-admin-doctors';
 
 const selectClassName =
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30';
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors hover:border-primary focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30';
 
 interface FormState {
   q: string;
@@ -37,7 +37,10 @@ function verificationVariant(status: VerificationStatus): 'default' | 'secondary
 export function AdminDoctorsPage() {
   const searchParams = useSearchParams();
   const initialVerificationStatus = searchParams.get('verificationStatus') ?? '';
-  const [form, setForm] = useState<FormState>({ ...EMPTY_FORM, verificationStatus: initialVerificationStatus });
+  const [form, setForm] = useState<FormState>({
+    ...EMPTY_FORM,
+    verificationStatus: initialVerificationStatus,
+  });
   const [filters, setFilters] = useState<AdminDoctorsFilters>({
     verificationStatus: initialVerificationStatus || undefined,
     page: 1,

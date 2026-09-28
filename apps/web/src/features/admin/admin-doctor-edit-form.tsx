@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import { useUpdateAdminDoctorProfile } from './use-admin-doctors';
 
 const selectClassName =
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30';
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors hover:border-primary focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30';
 
 const consultationOptions = CONSULTATION_MINUTES_OPTIONS as readonly number[];
 
@@ -34,7 +34,10 @@ const formSchema = z.object({
   yearsExperience: z
     .string()
     .trim()
-    .refine((value) => /^\d+$/.test(value) && Number(value) <= 70, 'Enter a whole number from 0 to 70.'),
+    .refine(
+      (value) => /^\d+$/.test(value) && Number(value) <= 70,
+      'Enter a whole number from 0 to 70.',
+    ),
   licenseNumber: z
     .string()
     .trim()
@@ -43,10 +46,15 @@ const formSchema = z.object({
   languagesText: z.string(),
   consultationMinutes: z
     .string()
-    .refine((value) => consultationOptions.includes(Number(value)), 'Choose a consultation length.'),
+    .refine(
+      (value) => consultationOptions.includes(Number(value)),
+      'Choose a consultation length.',
+    ),
   timezone: z.string().trim().min(1, 'Choose a timezone.'),
   primarySpecializationId: z.string().min(1, 'Choose a primary specialization.'),
-  secondarySpecializationIds: z.array(z.string()).max(2, 'Choose at most 2 secondary specializations.'),
+  secondarySpecializationIds: z
+    .array(z.string())
+    .max(2, 'Choose at most 2 secondary specializations.'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -151,7 +159,13 @@ export function AdminDoctorEditForm({ doctor }: { doctor: AdminDoctorDetail }) {
           error={errors.yearsExperience?.message}
         >
           {(control) => (
-            <Input {...control} type="number" min={0} max={70} {...form.register('yearsExperience')} />
+            <Input
+              {...control}
+              type="number"
+              min={0}
+              max={70}
+              {...form.register('yearsExperience')}
+            />
           )}
         </FormField>
       </div>
@@ -160,7 +174,11 @@ export function AdminDoctorEditForm({ doctor }: { doctor: AdminDoctorDetail }) {
         {(control) => <Textarea {...control} rows={4} maxLength={2000} {...form.register('bio')} />}
       </FormField>
 
-      <FormField id="admin-doctor-license" label="License number" error={errors.licenseNumber?.message}>
+      <FormField
+        id="admin-doctor-license"
+        label="License number"
+        error={errors.licenseNumber?.message}
+      >
         {(control) => <Input {...control} {...form.register('licenseNumber')} />}
       </FormField>
 
@@ -180,7 +198,11 @@ export function AdminDoctorEditForm({ doctor }: { doctor: AdminDoctorDetail }) {
           error={errors.consultationMinutes?.message}
         >
           {(control) => (
-            <select {...control} className={cn(selectClassName)} {...form.register('consultationMinutes')}>
+            <select
+              {...control}
+              className={cn(selectClassName)}
+              {...form.register('consultationMinutes')}
+            >
               {CONSULTATION_MINUTES_OPTIONS.map((minutes) => (
                 <option key={minutes} value={minutes}>
                   {minutes} minutes
