@@ -12,7 +12,7 @@ import { DoctorSummaryCard } from './doctor-summary-card';
 import { useDoctorDiscovery, type DoctorDiscoveryFilters } from './use-doctor-discovery';
 
 const selectClassName =
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30';
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors hover:border-primary focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30';
 
 const AVAILABLE_WITHIN_OPTIONS = [
   { label: 'Any time', value: '' },

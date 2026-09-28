@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 import { useUpdateUserStatus } from './use-admin-users';
 
 const selectClassName =
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30';
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors hover:border-primary focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30';
 
 const REASON_MAX_LENGTH = 500;
 
@@ -98,7 +98,9 @@ export function StatusChangeDialog({
             maxLength={REASON_MAX_LENGTH}
             rows={3}
             aria-invalid={reasonMissing}
-            placeholder={reasonRequired ? 'e.g. Repeated no-shows reported by patients.' : undefined}
+            placeholder={
+              reasonRequired ? 'e.g. Repeated no-shows reported by patients.' : undefined
+            }
           />
         </div>
 

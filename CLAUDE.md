@@ -24,7 +24,6 @@ Desktop-oriented, responsive web app. Design for 1280px+ first; every page stays
 - **No external services**: no external CMS, analytics, auth provider, email/SMS/push, file or image hosting, calendar, scheduling, AI, maps, or video conferencing. No CDN fonts, scripts, or images. All assets live in `apps/web/public` or are bundled. Use system fonts or `next/font/local`.
 - All business rules (authorization, availability, booking conflicts, state transitions) are enforced in NestJS. The frontend may pre-validate but is never trusted.
 - Roles: `PATIENT`, `DOCTOR`, `ADMIN`. Admins are created only by the seed script; no public admin registration.
-- All data is fictional. The app footer always shows "Fictional prototype — not for real medical use."
 - Validate every request (class-validator DTOs with `whitelist` + `forbidNonWhitelisted`). Errors return JSON `{ statusCode, message, code }`.
 - Never log passwords, tokens, or clinical note content.
 - Avatars are generated initials with a deterministic background color. No file uploads.

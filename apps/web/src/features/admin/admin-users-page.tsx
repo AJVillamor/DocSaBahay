@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { useAdminUsers, type AdminUsersFilters } from './use-admin-users';
 
 const selectClassName =
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30';
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none transition-colors hover:border-primary focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30';
 
 interface FormState {
   q: string;
@@ -149,7 +149,10 @@ export function AdminUsersPage() {
                 {users.data.items.map((user) => (
                   <tr key={user.id} className="hover:bg-muted/30">
                     <td className="px-4 py-2">
-                      <Link href={`/admin/users/${user.id}`} className="font-medium hover:underline">
+                      <Link
+                        href={`/admin/users/${user.id}`}
+                        className="font-medium hover:underline"
+                      >
                         {user.firstName || user.lastName
                           ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
                           : '—'}
