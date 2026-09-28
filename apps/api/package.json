@@ -1,0 +1,66 @@
+{
+  "name": "@doksabahay/api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "prisma generate",
+    "dev": "nest start --watch --preserveWatchOutput",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "start:prod": "prisma migrate deploy && node dist/main.js",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "prisma db seed",
+    "prisma:reset": "prisma migrate reset",
+    "prisma:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@doksabahay/shared": "workspace:*",
+    "@nestjs/common": "^11.2.6",
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/core": "^11.2.6",
+    "@nestjs/platform-express": "^11.2.6",
+    "@prisma/client": "~6.19.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "helmet": "^8.3.0",
+    "prisma": "~6.19.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@doksabahay/eslint-config": "workspace:*",
+    "@nestjs/cli": "^11.0.24",
+    "@nestjs/schematics": "^11.1.0",
+    "@nestjs/testing": "^11.2.6",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
+    "@types/supertest": "^6.0.3",
+    "eslint": "^9.39.0",
+    "jest": "^30.5.2",
+    "supertest": "^7.3.0",
+    "ts-jest": "^29.4.14",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3"
+  },
+  "jest": {
+    "rootDir": "src",
+    "testEnvironment": "node",
+    "moduleFileExtensions": [
+      "ts",
+      "js",
+      "json"
+    ],
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    }
+  }
+}

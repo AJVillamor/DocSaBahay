@@ -1,0 +1,70 @@
+# Local stack: `pnpm stack:up` (web + api + db) or `pnpm db:up` (databases only).
+# Values come from the root .env (see .env.example); defaults are for local development only.
+
+x-postgres: &postgres
+  image: postgres:16-alpine
+  restart: unless-stopped
+  healthcheck:
+    test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+    interval: 5s
+    timeout: 5s
+    retries: 10
+
+services:
+  db:
+    <<: *postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: doksabahay
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  db_test:
+    <<: *postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: doksabahay_test
+    ports:
+      - '5433:5432'
+    volumes:
+      - db_test_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      WEB_ORIGIN: http://localhost:3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/doksabahay?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev-only-access-secret-change-me-000000}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-only-refresh-secret-change-me-00000}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@doksabahay.test}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-ChangeMe123!}
+    ports:
+      - '4000:4000'
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        API_URL: http://api:4000
+    depends_on:
+      - api
+    environment:
+      API_URL: http://api:4000
+    ports:
+      - '3000:3000'
+
+volumes:
+  db_data:
+  db_test_data:
