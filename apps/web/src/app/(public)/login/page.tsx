@@ -1,12 +1,36 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { Suspense } from 'react';
+
+import { PageLoading } from '@/components/page-state';
+import { AuthCard } from '@/features/auth/auth-card';
+import { LoginForm } from '@/features/auth/login-form';
 
 export const metadata: Metadata = { title: 'Sign in' };
 
-export default function Page() {
+export default function LoginPage() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-2 px-4 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
-      <p className="text-muted-foreground">The sign-in form is coming next.</p>
-    </main>
+    <AuthCard
+      title="Sign in"
+      description="Welcome back to DokSaBahay."
+      footer={
+        <>
+          New here?{' '}
+          <Link href="/register/patient" className="text-foreground underline underline-offset-4">
+            Register as a patient
+          </Link>{' '}
+          or{' '}
+          <Link href="/register/doctor" className="text-foreground underline underline-offset-4">
+            join as a doctor
+          </Link>
+          .
+        </>
+      }
+    >
+      {/* useSearchParams (for ?next=) needs a Suspense boundary. */}
+      <Suspense fallback={<PageLoading />}>
+        <LoginForm />
+      </Suspense>
+    </AuthCard>
   );
 }

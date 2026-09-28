@@ -1,12 +1,31 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+
+import { AuthCard } from '@/features/auth/auth-card';
+import { RegisterPatientForm } from '@/features/auth/register-patient-form';
 
 export const metadata: Metadata = { title: 'Register as a patient' };
 
-export default function Page() {
+export default function RegisterPatientPage() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-2 px-4 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">Register as a patient</h1>
-      <p className="text-muted-foreground">The patient registration form is coming next.</p>
-    </main>
+    <AuthCard
+      title="Register as a patient"
+      description="Create an account to consult doctors from home. Use fictional details only."
+      footer={
+        <>
+          Already have an account?{' '}
+          <Link href="/login" className="text-foreground underline underline-offset-4">
+            Sign in
+          </Link>
+          . Are you a doctor?{' '}
+          <Link href="/register/doctor" className="text-foreground underline underline-offset-4">
+            Join as a doctor
+          </Link>
+          .
+        </>
+      }
+    >
+      <RegisterPatientForm />
+    </AuthCard>
   );
 }
