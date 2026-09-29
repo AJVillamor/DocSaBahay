@@ -9,6 +9,7 @@ import {
   type AdminAppointmentDetail,
   type AdminAppointmentIssuesResponse,
   type AdminAppointmentSummary,
+  type AdminSetAppointmentDateTimeInput,
   type PaginatedAdminAppointments,
 } from '@doksabahay/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -88,6 +89,23 @@ export function useInvalidateAdminAppointment() {
   return useMutation<AdminAppointmentSummary, ApiError, { id: string; input: AdminAppointmentActionInput }>({
     mutationFn: ({ id, input }) =>
       api.post(`/admin/appointments/${id}/invalidate`, input, adminAppointmentSummarySchema),
+    onSuccess: () => void invalidateAdminAppointments(queryClient),
+  });
+}
+
+/**
+ * Demo/admin tool: moves an appointment to any date and time, bypassing
+ * every normal booking rule. No participant is notified.
+ */
+export function useSetAdminAppointmentDateTime() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    AdminAppointmentSummary,
+    ApiError,
+    { id: string; input: AdminSetAppointmentDateTimeInput }
+  >({
+    mutationFn: ({ id, input }) =>
+      api.patch(`/admin/appointments/${id}/datetime`, input, adminAppointmentSummarySchema),
     onSuccess: () => void invalidateAdminAppointments(queryClient),
   });
 }

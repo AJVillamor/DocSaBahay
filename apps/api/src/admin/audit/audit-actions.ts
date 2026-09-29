@@ -19,4 +19,5 @@ export const AUDIT_ACTIONS = {
   SPECIALIZATION_DELETED: 'specialization.deleted',
   APPOINTMENT_CANCELLED_BY_ADMIN: 'appointment.cancelled_by_admin',
   APPOINTMENT_INVALIDATED: 'appointment.invalidated',
+  APPOINTMENT_DATETIME_EDITED: 'appointment.datetime_edited_by_admin',
 } as const;

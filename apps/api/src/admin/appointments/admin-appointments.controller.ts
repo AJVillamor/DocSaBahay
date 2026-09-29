@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import type { Request } from 'express';
 
@@ -12,7 +12,11 @@ import {
   type PaginatedAdminAppointmentsDto,
 } from './admin-appointments.service';
 import type { AdminAppointmentSummaryDto } from './admin-appointments.mapper';
-import { AdminAppointmentActionDto, ListAdminAppointmentsQueryDto } from './dto/admin-appointments.dto';
+import {
+  AdminAppointmentActionDto,
+  AdminSetAppointmentDateTimeDto,
+  ListAdminAppointmentsQueryDto,
+} from './dto/admin-appointments.dto';
 
 @Roles(Role.ADMIN)
 @Controller('admin/appointments')
@@ -56,5 +60,16 @@ export class AdminAppointmentsController {
     @Req() request: Request,
   ): Promise<AdminAppointmentSummaryDto> {
     return this.appointments.invalidate(actor, id, dto, request.ip);
+  }
+
+  /** Demo/admin tool: move an appointment to any date and time, bypassing every normal booking rule. */
+  @Patch(':id/datetime')
+  setDateTime(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AdminSetAppointmentDateTimeDto,
+    @Req() request: Request,
+  ): Promise<AdminAppointmentSummaryDto> {
+    return this.appointments.setDateTime(actor, id, dto, request.ip);
   }
 }
