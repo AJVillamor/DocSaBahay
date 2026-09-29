@@ -47,3 +47,12 @@ export class AdminAppointmentActionDto {
   @Length(1, 500)
   reason: string;
 }
+
+/**
+ * Body of `PATCH /admin/appointments/:id/datetime` — a demo/admin tool. See
+ * `AdminAppointmentsService.setDateTime` for exactly what it bypasses.
+ */
+export class AdminSetAppointmentDateTimeDto {
+  @IsISO8601()
+  startAt: string;
+}
