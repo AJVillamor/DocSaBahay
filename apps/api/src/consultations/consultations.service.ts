@@ -257,15 +257,45 @@ export class ConsultationsService {
    * @throws ConsultationUnavailableException if the session isn't in either state.
    */
   async assertRecordWritable(appointmentId: string): Promise<void> {
-    const session = await this.prisma.consultationSession.findUnique({ where: { appointmentId } });
-    if (
-      !session ||
-      (session.state !== SessionState.IN_PROGRESS && session.state !== SessionState.COMPLETED)
-    ) {
+    if (!(await this.isInStates(appointmentId, [SessionState.IN_PROGRESS, SessionState.COMPLETED]))) {
       throw new ConsultationUnavailableException(
         'Notes and prescriptions can only be edited while the consultation is in progress or completed.',
       );
     }
+  }
+
+  /**
+   * Gate reused by `ConsultationMessagesService.list`: the chat history stays
+   * visible once the consultation has started, and after it ends, but never
+   * before — this is a live consultation chat, not a persistent inbox.
+   *
+   * @throws ConsultationUnavailableException if the session isn't in either state.
+   */
+  async assertMessagingReadable(appointmentId: string): Promise<void> {
+    if (!(await this.isInStates(appointmentId, [SessionState.IN_PROGRESS, SessionState.COMPLETED]))) {
+      throw new ConsultationUnavailableException(
+        'Messaging is only available once the consultation has started.',
+      );
+    }
+  }
+
+  /**
+   * Gate reused by `ConsultationMessagesService.send`: unlike reading, new
+   * messages may only be sent while the consultation is actively happening.
+   *
+   * @throws ConsultationUnavailableException if the session isn't `IN_PROGRESS`.
+   */
+  async assertMessagingWritable(appointmentId: string): Promise<void> {
+    if (!(await this.isInStates(appointmentId, [SessionState.IN_PROGRESS]))) {
+      throw new ConsultationUnavailableException(
+        'Messaging is only available while the consultation is in progress.',
+      );
+    }
+  }
+
+  private async isInStates(appointmentId: string, states: SessionState[]): Promise<boolean> {
+    const session = await this.prisma.consultationSession.findUnique({ where: { appointmentId } });
+    return !!session && states.includes(session.state);
   }
 
   /** Loads the appointment (with session + participant profiles), 404ing for a non-participant. */

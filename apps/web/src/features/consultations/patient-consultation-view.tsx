@@ -13,10 +13,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserAvatar } from '@/components/user-avatar';
 
+import { ConsultationChatPanel } from './consultation-chat-panel';
 import { useJoinConsultation } from './use-consultation';
 
-/** Patient's side of the consultation workspace: doctor card, reason for visit, and the join control. */
-export function PatientConsultationView({ session }: { session: ConsultationSession }) {
+/** Patient's side of the consultation workspace: doctor card, reason for visit, join control and chat. */
+export function PatientConsultationView({
+  session,
+  connected,
+}: {
+  session: ConsultationSession;
+  connected: boolean;
+}) {
   const { appointment } = session;
   const join = useJoinConsultation();
   const alreadyJoined = session.patientJoinedAt !== null;
@@ -85,6 +92,19 @@ export function PatientConsultationView({ session }: { session: ConsultationSess
           check in and, once your notes and prescription are ready, view them here.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Chat</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ConsultationChatPanel
+            appointmentId={appointment.id}
+            sessionState={session.state}
+            connected={connected}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -117,6 +117,7 @@ model User {
   patientNotes         ConsultationNote[] @relation("NotePatient")
   doctorPrescriptions  Prescription[]     @relation("PrescriptionDoctor")
   patientPrescriptions Prescription[]     @relation("PrescriptionPatient")
+  consultationMessages ConsultationMessage[]
 
   notifications Notification[]
   auditLogs     AuditLog[]
@@ -297,6 +298,7 @@ model Appointment {
   session       ConsultationSession?
   note          ConsultationNote?
   prescriptions Prescription[]
+  messages      ConsultationMessage[]
 
   @@index([doctorId, startAt])
   @@index([patientId, startAt])
@@ -335,6 +337,21 @@ model ConsultationSession {
   appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
   @@map("consultation_sessions")
+}
+
+/// Chat sent within a consultation, only while its session is IN_PROGRESS. Never logged.
+model ConsultationMessage {
+  id            String   @id @default(uuid()) @db.Uuid
+  appointmentId String   @map("appointment_id") @db.Uuid
+  senderId      String   @map("sender_id") @db.Uuid
+  body          String
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  sender      User        @relation(fields: [senderId], references: [id], onDelete: Restrict)
+
+  @@index([appointmentId, createdAt])
+  @@map("consultation_messages")
 }
 
 /// Clinical note content must never be logged.
