@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { ADMIN_APPOINTMENTS_PAGE_SIZE } from '@doksabahay/shared';
 import { AppointmentEventType, AppointmentStatus, NotificationType, Prisma, SessionState } from '@prisma/client';
 
-import { AppointmentNotModifiableException } from '../../appointments/appointments.exceptions';
+import {
+  AppointmentNotModifiableException,
+  mapAppointmentConstraintError,
+} from '../../appointments/appointments.exceptions';
 import type { AuthUser } from '../../auth/auth.types';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -14,7 +17,11 @@ import {
   toAdminAppointmentSummary,
   type AdminAppointmentSummaryDto,
 } from './admin-appointments.mapper';
-import type { AdminAppointmentActionDto, ListAdminAppointmentsQueryDto } from './dto/admin-appointments.dto';
+import type {
+  AdminAppointmentActionDto,
+  AdminSetAppointmentDateTimeDto,
+  ListAdminAppointmentsQueryDto,
+} from './dto/admin-appointments.dto';
 
 const DOCTOR_APPOINTMENTS_LINK = '/doctor/appointments';
 const PATIENT_APPOINTMENTS_LINK = '/patient/appointments';
@@ -274,5 +281,69 @@ export class AdminAppointmentsService {
     ]);
 
     return toAdminAppointmentSummary(updated);
+  }
+
+  /**
+   * Demo/admin tool: moves an appointment to any date and time, down to the
+   * minute, regardless of its status. Unlike a patient's own reschedule, this
+   * bypasses slot alignment, lead time, the booking horizon, and the
+   * per-person/per-account upcoming limits entirely — it exists to let a demo
+   * presenter line up an appointment's time freely (e.g. move it to start in
+   * two minutes to demo joining a consultation live), not to model a real
+   * reschedule. `endAt` shifts by the same amount as `startAt`, so the
+   * appointment's original duration is preserved. The two database-level
+   * constraints still apply and are surfaced as ordinary 409s: `endAt` must
+   * stay after `startAt` (guaranteed here, since both shift together) and, if
+   * the appointment is SCHEDULED, it must not end up overlapping another
+   * SCHEDULED appointment for the same doctor or patient.
+   *
+   * No participant notification and no `AppointmentEvent` beyond the audit
+   * trail — this is a backstage tool, not a real-world reschedule the other
+   * party should be told about.
+   *
+   * @throws AdminAppointmentNotFoundException if `id` does not exist.
+   * @throws SlotTakenException | PatientOverlapException if the new time
+   *   collides with another SCHEDULED appointment (only possible when this
+   *   appointment is itself SCHEDULED).
+   */
+  async setDateTime(
+    actor: AuthUser,
+    id: string,
+    dto: AdminSetAppointmentDateTimeDto,
+    ipAddress?: string,
+  ): Promise<AdminAppointmentSummaryDto> {
+    const existing = await this.prisma.appointment.findUnique({ where: { id } });
+    if (!existing) {
+      throw new AdminAppointmentNotFoundException();
+    }
+
+    const durationMs = existing.endAt.getTime() - existing.startAt.getTime();
+    const newStartAt = new Date(dto.startAt);
+    const newEndAt = new Date(newStartAt.getTime() + durationMs);
+    const before = { startAt: existing.startAt.toISOString(), endAt: existing.endAt.toISOString() };
+    const after = { startAt: newStartAt.toISOString(), endAt: newEndAt.toISOString() };
+
+    try {
+      const updated = await this.prisma.$transaction(async (tx) => {
+        const result = await tx.appointment.update({
+          where: { id },
+          data: { startAt: newStartAt, endAt: newEndAt, version: { increment: 1 } },
+          include: ADMIN_APPOINTMENT_SUMMARY_INCLUDE,
+        });
+        await this.audit.record(tx, {
+          actorId: actor.id,
+          action: AUDIT_ACTIONS.APPOINTMENT_DATETIME_EDITED,
+          entityType: AUDIT_ENTITY_TYPES.APPOINTMENT,
+          entityId: id,
+          before,
+          after,
+          ipAddress,
+        });
+        return result;
+      });
+      return toAdminAppointmentSummary(updated);
+    } catch (error) {
+      mapAppointmentConstraintError(error);
+    }
   }
 }

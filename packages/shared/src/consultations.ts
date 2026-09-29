@@ -15,6 +15,9 @@ export const CONSULTATION_NO_SHOW_GRACE_MINUTES = 15;
 /** Fallback poll interval for `GET /consultations/:appointmentId` while the socket is disconnected. */
 export const CONSULTATION_POLL_INTERVAL_MS = 5_000;
 
+/** Max length of a consultation chat message body. */
+export const MESSAGE_BODY_MAX_LENGTH = 2_000;
+
 /**
  * Whether `now` falls inside the join window for an appointment spanning
  * `startAt`–`endAt`. Shared by `ConsultationsService` (enforcement) and the
@@ -113,3 +116,36 @@ export const consultationPresenceEventSchema = z.object({
 });
 
 export type ConsultationPresenceEvent = z.infer<typeof consultationPresenceEventSchema>;
+
+/**
+ * One chat message sent within a consultation. Only ever readable/sendable
+ * once the session has reached `IN_PROGRESS` (see
+ * `ConsultationsService.assertMessagingReadable`/`assertMessagingWritable`) —
+ * this is a live consultation chat, not a persistent inbox.
+ */
+export const consultationMessageSchema = z.object({
+  id: z.uuid(),
+  appointmentId: z.uuid(),
+  senderId: z.uuid(),
+  body: z.string(),
+  createdAt: z.iso.datetime(),
+});
+
+export type ConsultationMessage = z.infer<typeof consultationMessageSchema>;
+
+/**
+ * Socket.io event broadcast to room `consultation:{appointmentId}` when
+ * either participant sends a chat message. Like `CONSULTATION_STATE_EVENT`,
+ * the full message is pushed directly (not just a change-hint) since this
+ * room is already a live status board — but `POST .../messages` remains the
+ * only source of truth (the message is persisted there first), and the web
+ * client falls back to polling `GET .../messages` while disconnected.
+ */
+export const CONSULTATION_MESSAGE_EVENT = 'consultation:message';
+
+export const consultationMessageEventSchema = z.object({
+  appointmentId: z.uuid(),
+  message: consultationMessageSchema,
+});
+
+export type ConsultationMessageEvent = z.infer<typeof consultationMessageEventSchema>;

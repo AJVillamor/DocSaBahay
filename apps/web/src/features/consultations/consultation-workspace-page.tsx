@@ -40,9 +40,9 @@ export function ConsultationWorkspacePage({ appointmentId }: { appointmentId: st
         <div className="flex flex-col gap-6">
           <ConsultationHeader session={consultation.data} presence={room.presence} />
           {user.role === Role.DOCTOR ? (
-            <DoctorConsultationView session={consultation.data} />
+            <DoctorConsultationView session={consultation.data} connected={room.connected} />
           ) : (
-            <PatientConsultationView session={consultation.data} />
+            <PatientConsultationView session={consultation.data} connected={room.connected} />
           )}
         </div>
       ) : null}

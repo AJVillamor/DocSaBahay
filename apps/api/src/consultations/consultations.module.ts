@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 
 import { AppointmentsModule } from '../appointments/appointments.module';
+import { ConsultationMessagesController } from './consultation-messages.controller';
+import { ConsultationMessagesService } from './consultation-messages.service';
 import { ConsultationsController } from './consultations.controller';
 import { ConsultationsService } from './consultations.service';
 
@@ -15,12 +17,14 @@ import { ConsultationsService } from './consultations.service';
  * listens for `CONSULTATION_STATE_CHANGED_EVENT` via `EventEmitter2` — this
  * module has no direct dependency on it. Exports `ConsultationsService` so
  * the records module can reuse `assertRecordWritable` instead of duplicating
- * the session-state gate for notes/prescriptions.
+ * the session-state gate for notes/prescriptions. Also hosts the consultation
+ * chat (`ConsultationMessagesController`/`Service`), gated through
+ * `ConsultationsService.assertMessagingReadable`/`assertMessagingWritable`.
  */
 @Module({
   imports: [AppointmentsModule],
-  controllers: [ConsultationsController],
-  providers: [ConsultationsService],
+  controllers: [ConsultationsController, ConsultationMessagesController],
+  providers: [ConsultationsService, ConsultationMessagesService],
   exports: [ConsultationsService],
 })
 export class ConsultationsModule {}

@@ -26,3 +26,23 @@ export interface ConsultationStateChangedEvent {
   startedAt: string | null;
   endedAt: string | null;
 }
+
+/**
+ * Domain event emitted by `ConsultationMessagesService` after a chat message
+ * is persisted. `NotificationsGateway` listens for it and broadcasts the
+ * message to socket room `consultation:{appointmentId}` as
+ * `CONSULTATION_MESSAGE_EVENT`.
+ */
+export const CONSULTATION_MESSAGE_SENT_EVENT = 'consultation.message_sent';
+
+/** Payload of {@link CONSULTATION_MESSAGE_SENT_EVENT}. */
+export interface ConsultationMessageSentEvent {
+  appointmentId: string;
+  message: {
+    id: string;
+    appointmentId: string;
+    senderId: string;
+    body: string;
+    createdAt: string;
+  };
+}
