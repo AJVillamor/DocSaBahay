@@ -13,6 +13,7 @@ import {
   AdminAppointmentActionDialog,
   type AdminAppointmentActionKind,
 } from './admin-appointment-action-dialog';
+import { AdminAppointmentDateTimeDialog } from './admin-appointment-datetime-dialog';
 import { AdminAppointmentDetailPanel } from './admin-appointment-detail-panel';
 import { useAdminAppointments, type AdminAppointmentsFilters } from './use-admin-appointments';
 
@@ -60,6 +61,7 @@ export function AdminAppointmentsPage() {
     appointment: AdminAppointmentSummary;
     action: AdminAppointmentActionKind;
   } | null>(null);
+  const [dateTimeTarget, setDateTimeTarget] = useState<AdminAppointmentSummary | null>(null);
   const appointments = useAdminAppointments(filters);
 
   function applyFilters(): void {
@@ -301,6 +303,9 @@ export function AdminAppointmentsPage() {
         onInvalidate={() => {
           if (selected) setActionTarget({ appointment: selected, action: 'invalidate' });
         }}
+        onEditDateTime={() => {
+          if (selected) setDateTimeTarget(selected);
+        }}
       />
 
       <AdminAppointmentActionDialog
@@ -309,6 +314,16 @@ export function AdminAppointmentsPage() {
         onOpenChange={(open) => {
           if (!open) {
             setActionTarget(null);
+            setSelected(null);
+          }
+        }}
+      />
+
+      <AdminAppointmentDateTimeDialog
+        appointment={dateTimeTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDateTimeTarget(null);
             setSelected(null);
           }
         }}

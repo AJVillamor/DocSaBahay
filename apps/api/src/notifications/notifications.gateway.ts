@@ -11,6 +11,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import {
+  CONSULTATION_MESSAGE_EVENT,
   CONSULTATION_PRESENCE_EVENT,
   CONSULTATION_STATE_EVENT,
   REALTIME_NOTIFICATION_EVENT,
@@ -21,7 +22,9 @@ import type { SessionState } from '@prisma/client';
 import type { Server, Socket } from 'socket.io';
 
 import {
+  CONSULTATION_MESSAGE_SENT_EVENT,
   CONSULTATION_STATE_CHANGED_EVENT,
+  type ConsultationMessageSentEvent,
   type ConsultationStateChangedEvent,
 } from '../consultations/consultations.events';
 import { PrismaService } from '../prisma/prisma.service';
@@ -235,6 +238,22 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       startedAt: event.startedAt,
       endedAt: event.endedAt,
     } satisfies ConsultationStatePayload);
+  }
+
+  /**
+   * Listens for `ConsultationMessagesService.send`'s domain event and
+   * broadcasts the new message to the consultation's room. Like
+   * `onConsultationStateChanged`, this pushes the full message directly
+   * (see `CONSULTATION_MESSAGE_EVENT`'s doc comment for why) — the message
+   * was already persisted by `send` before this fires, so the broadcast is
+   * only ever an ephemeral, real-time echo of durably-saved data.
+   */
+  @OnEvent(CONSULTATION_MESSAGE_SENT_EVENT)
+  onConsultationMessageSent(event: ConsultationMessageSentEvent): void {
+    this.server.to(consultationRoom(event.appointmentId)).emit(CONSULTATION_MESSAGE_EVENT, {
+      appointmentId: event.appointmentId,
+      message: event.message,
+    });
   }
 
   private broadcastPresence(appointmentId: string, userId: string, online: boolean): void {

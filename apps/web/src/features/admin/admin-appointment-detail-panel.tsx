@@ -33,11 +33,13 @@ export function AdminAppointmentDetailPanel({
   onOpenChange,
   onCancel,
   onInvalidate,
+  onEditDateTime,
 }: {
   appointmentId: string | null;
   onOpenChange: (open: boolean) => void;
   onCancel: () => void;
   onInvalidate: () => void;
+  onEditDateTime: () => void;
 }) {
   const detail = useAdminAppointment(appointmentId ?? undefined);
   const open = appointmentId !== null;
@@ -102,16 +104,21 @@ export function AdminAppointmentDetailPanel({
               ) : null}
             </div>
 
-            {detail.data.status === AppointmentStatus.SCHEDULED ? (
-              <div className="flex gap-2 border-y py-3">
-                <Button type="button" variant="destructive" size="sm" onClick={onCancel}>
-                  Cancel
-                </Button>
-                <Button type="button" variant="outline" size="sm" onClick={onInvalidate}>
-                  Invalidate
-                </Button>
-              </div>
-            ) : null}
+            <div className="flex flex-wrap gap-2 border-y py-3">
+              {detail.data.status === AppointmentStatus.SCHEDULED ? (
+                <>
+                  <Button type="button" variant="destructive" size="sm" onClick={onCancel}>
+                    Cancel
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={onInvalidate}>
+                    Invalidate
+                  </Button>
+                </>
+              ) : null}
+              <Button type="button" variant="outline" size="sm" onClick={onEditDateTime}>
+                Edit date &amp; time
+              </Button>
+            </div>
 
             <div>
               <p className="mb-2 text-sm font-medium">Event timeline</p>

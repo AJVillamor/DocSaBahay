@@ -245,6 +245,19 @@ export const adminAppointmentActionSchema = z.object({
 });
 export type AdminAppointmentActionInput = z.infer<typeof adminAppointmentActionSchema>;
 
+/**
+ * Body of `PATCH /admin/appointments/:id/datetime` — a demo/admin tool that
+ * moves an appointment to any date and time, down to the minute, bypassing
+ * every normal booking rule (slot alignment, lead time, horizon, per-person
+ * and per-account limits). `endAt` shifts by the same amount so the
+ * appointment's original duration is preserved. Only the database's overlap
+ * and end-after-start constraints still apply.
+ */
+export const adminSetAppointmentDateTimeSchema = z.object({
+  startAt: z.iso.datetime({ message: 'Choose a valid date and time.' }),
+});
+export type AdminSetAppointmentDateTimeInput = z.infer<typeof adminSetAppointmentDateTimeSchema>;
+
 /** Reasons a SCHEDULED appointment is flagged by `GET /admin/appointments/issues`. */
 export const adminAppointmentIssueTypeSchema = z.enum([
   /** Doctor is no longer APPROVED/ACTIVE (was, at booking time). */

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { ClinicalRecordsPanel } from './clinical-records-panel';
+import { ConsultationChatPanel } from './consultation-chat-panel';
 import {
   useCompleteConsultation,
   useJoinConsultation,
@@ -35,7 +36,13 @@ function SummaryField({ label, value }: { label: string; value: string }) {
  * visit, join/start/complete controls, a no-show action, and the notes &
  * prescription panel (`ClinicalRecordsPanel`).
  */
-export function DoctorConsultationView({ session }: { session: ConsultationSession }) {
+export function DoctorConsultationView({
+  session,
+  connected,
+}: {
+  session: ConsultationSession;
+  connected: boolean;
+}) {
   const { appointment, patientSummary } = session;
   const join = useJoinConsultation();
   const start = useStartConsultation();
@@ -153,14 +160,29 @@ export function DoctorConsultationView({ session }: { session: ConsultationSessi
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Notes & prescription</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ClinicalRecordsPanel appointmentId={appointment.id} sessionState={session.state} />
-        </CardContent>
-      </Card>
+      <div className="flex flex-col gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Chat</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ConsultationChatPanel
+              appointmentId={appointment.id}
+              sessionState={session.state}
+              connected={connected}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Notes & prescription</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ClinicalRecordsPanel appointmentId={appointment.id} sessionState={session.state} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
